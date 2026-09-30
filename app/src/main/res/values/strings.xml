@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">OrganizaMe</string>
+    <string name="initial_status">Proyecto preparado. El próximo paso es implementar el primer flujo de tareas.</string>
+</resources>
+
