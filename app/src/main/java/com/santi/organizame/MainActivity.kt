@@ -26,7 +26,10 @@ class MainActivity : AppCompatActivity() {
                 val fecha = datos?.getStringExtra("fecha")
                 val hora = datos?.getStringExtra("hora")
                 val prioridad = datos?.getStringExtra("prioridad")
+                val categoria = datos?.getStringExtra("categoria")
+                val recordatorio = datos?.getStringExtra("recordatorio")
                 val estado = datos?.getStringExtra("estado")
+
 
                 binding.statusText.text = """
                     $titulo
@@ -35,6 +38,9 @@ class MainActivity : AppCompatActivity() {
                     Fecha: $fecha
                     Hora: $hora
                     Prioridad: $prioridad
+                     Categoría: $categoria
+                     Recordatorio: $recordatorio
+
                     Estado: $estado
                 """.trimIndent()
             }
