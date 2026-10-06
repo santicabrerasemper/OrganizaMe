@@ -9,6 +9,9 @@ import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.EstadoTarea
 import com.santi.organizame.modelo.Prioridad
 import com.santi.organizame.modelo.TipoActividad
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
@@ -56,8 +59,8 @@ class MainActivity : AppCompatActivity() {
             tipo = TipoActividad.TAREA,
             titulo = "Estudiar inglés",
             descripcion = "Repasar unidad 4",
-            fecha = "05/10/2026",
-            hora = "18:00",
+            fecha = LocalDate.of(2026, 10, 5),
+            hora = LocalTime.of(18, 0),
             prioridad = Prioridad.ALTA,
             estadoTarea = EstadoTarea.PENDIENTE
         )
@@ -66,8 +69,8 @@ class MainActivity : AppCompatActivity() {
             ${tareaPrueba.titulo}
             ${tareaPrueba.descripcion}
 
-            Fecha: ${tareaPrueba.fecha}
-            Hora: ${tareaPrueba.hora}
+            Fecha: ${tareaPrueba.fecha?.format(FORMATO_FECHA)}
+            Hora: ${tareaPrueba.hora?.format(FORMATO_HORA)}
             Prioridad: ${tareaPrueba.prioridad}
             Estado: ${tareaPrueba.estadoTarea}
         """.trimIndent()
@@ -78,5 +81,10 @@ class MainActivity : AppCompatActivity() {
 
             nuevaTareaLauncher.launch(intent)
         }
+    }
+
+    private companion object {
+        val FORMATO_FECHA: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/uuuu")
+        val FORMATO_HORA: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     }
 }

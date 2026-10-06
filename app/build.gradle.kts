@@ -44,6 +44,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.constraintlayout)
     implementation(libs.material)
+    implementation(libs.room.runtime)
     testImplementation(libs.junit)
 }
 

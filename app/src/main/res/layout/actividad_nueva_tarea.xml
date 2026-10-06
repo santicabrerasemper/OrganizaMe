@@ -49,14 +49,16 @@
                 android:id="@+id/fechaTarea"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Fecha"
+                android:hint="Fecha (dd/MM/aaaa)"
+                android:inputType="date"
                 android:layout_marginTop="12dp" />
 
             <EditText
                 android:id="@+id/horaTarea"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Hora"
+                android:hint="Hora (HH:mm)"
+                android:inputType="time"
                 android:layout_marginTop="12dp" />
 
             <TextView

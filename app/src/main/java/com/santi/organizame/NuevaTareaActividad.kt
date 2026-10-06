@@ -11,6 +11,11 @@ import com.santi.organizame.modelo.TipoActividad
 import android.widget.ArrayAdapter
 import com.santi.organizame.modelo.Categoria
 import com.santi.organizame.modelo.AnticipacionRecordatorio
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.format.ResolverStyle
 
 class NuevaTareaActividad : AppCompatActivity() {
 
@@ -130,14 +135,27 @@ class NuevaTareaActividad : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            val fechaConvertida = convertirFecha(fecha) ?: if (fecha.isNotBlank()) {
+                binding.fechaTarea.error = "Usá el formato dd/MM/aaaa"
+                return@setOnClickListener
+            } else {
+                null
+            }
+
+            val horaConvertida = convertirHora(hora) ?: if (hora.isNotBlank()) {
+                binding.horaTarea.error = "Usá el formato HH:mm"
+                return@setOnClickListener
+            } else {
+                null
+            }
 
 
             val nuevaTarea = Actividad(
                 tipo = TipoActividad.TAREA,
                 titulo = titulo,
                 descripcion = descripcion,
-                fecha = fecha,
-                hora = hora,
+                fecha = fechaConvertida,
+                hora = horaConvertida,
                 prioridad = prioridadSeleccionada,
                 categoriaId = categoriaSeleccionada?.id,
                 recordatorio = recordatorioSeleccionado,
@@ -148,8 +166,8 @@ class NuevaTareaActividad : AppCompatActivity() {
 
             resultado.putExtra("titulo", nuevaTarea.titulo)
             resultado.putExtra("descripcion", nuevaTarea.descripcion)
-            resultado.putExtra("fecha", nuevaTarea.fecha)
-            resultado.putExtra("hora", nuevaTarea.hora)
+            resultado.putExtra("fecha", nuevaTarea.fecha?.format(FORMATO_FECHA).orEmpty())
+            resultado.putExtra("hora", nuevaTarea.hora?.format(FORMATO_HORA).orEmpty())
             resultado.putExtra("prioridad", nuevaTarea.prioridad.name)
             resultado.putExtra(
                 "categoria",
@@ -166,5 +184,35 @@ class NuevaTareaActividad : AppCompatActivity() {
 
             finish()
         }
+    }
+
+    private fun convertirFecha(valor: String): LocalDate? =
+        convertir(valor, FORMATO_FECHA, LocalDate::parse)
+
+    private fun convertirHora(valor: String): LocalTime? =
+        convertir(valor, FORMATO_HORA, LocalTime::parse)
+
+    private fun <T> convertir(
+        valor: String,
+        formato: DateTimeFormatter,
+        conversor: (CharSequence, DateTimeFormatter) -> T
+    ): T? {
+        if (valor.isBlank()) return null
+
+        return try {
+            conversor(valor.trim(), formato)
+        } catch (_: DateTimeParseException) {
+            null
+        }
+    }
+
+    private companion object {
+        val FORMATO_FECHA: DateTimeFormatter = DateTimeFormatter
+            .ofPattern("dd/MM/uuuu")
+            .withResolverStyle(ResolverStyle.STRICT)
+
+        val FORMATO_HORA: DateTimeFormatter = DateTimeFormatter
+            .ofPattern("HH:mm")
+            .withResolverStyle(ResolverStyle.STRICT)
     }
 }
