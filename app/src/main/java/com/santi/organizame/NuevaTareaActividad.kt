@@ -16,18 +16,25 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
 import android.widget.Toast
+import java.time.Instant
 import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.OrganizaMeDatabase
 
 class NuevaTareaActividad : AppCompatActivity() {
 
     private lateinit var binding: ActividadNuevaTareaBinding
+    private lateinit var repositorio: ActividadRepository
+    private var actividadEditando: Actividad? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActividadNuevaTareaBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        repositorio = ActividadRepository(
+            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
+        )
 
         val prioridades = Prioridad.values().map { it.name }
 
@@ -92,6 +99,64 @@ class NuevaTareaActividad : AppCompatActivity() {
 
         binding.recordatorioTarea.adapter = adaptadorRecordatorio
 
+        val actividadId = intent.getLongExtra("actividadId", -1L)
+
+        if (actividadId != -1L) {
+            repositorio.obtenerPorId(actividadId) { resultado ->
+                runOnUiThread {
+                    resultado
+                        .onSuccess { actividad ->
+                            if (actividad != null) {
+                                actividadEditando = actividad
+
+                                binding.tituloTarea.setText(actividad.titulo)
+                                binding.descripcionTarea.setText(actividad.descripcion ?: "")
+
+                                binding.fechaTarea.setText(
+                                    actividad.fecha?.format(FORMATO_FECHA) ?: ""
+                                )
+
+                                binding.horaTarea.setText(
+                                    actividad.hora?.format(FORMATO_HORA) ?: ""
+                                )
+
+                                binding.prioridadTarea.setSelection(
+                                    Prioridad.values().indexOf(actividad.prioridad)
+                                )
+
+                                val posicionCategoria = categorias.indexOfFirst {
+                                    it?.id == actividad.categoriaId
+                                }
+
+                                binding.categoriaTarea.setSelection(
+                                    if (posicionCategoria >= 0) posicionCategoria else 0
+                                )
+
+                                val posicionRecordatorio =
+                                    when (actividad.recordatorio) {
+                                        AnticipacionRecordatorio.A_LA_HORA -> 1
+                                        AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> 2
+                                        AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> 3
+                                        AnticipacionRecordatorio.UNA_HORA_ANTES -> 4
+                                        AnticipacionRecordatorio.UN_DIA_ANTES -> 5
+                                        null -> 0
+                                    }
+
+                                binding.recordatorioTarea.setSelection(posicionRecordatorio)
+
+                                binding.btnGuardarTarea.text = "Guardar cambios"
+                            }
+                        }
+                        .onFailure {
+                            Toast.makeText(
+                                this,
+                                "No se pudo cargar la tarea",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                }
+            }
+        }
 
         binding.btnGuardarTarea.setOnClickListener {
 
@@ -152,39 +217,73 @@ class NuevaTareaActividad : AppCompatActivity() {
             }
 
 
-            val nuevaTarea = Actividad(
-                tipo = TipoActividad.TAREA,
-                titulo = titulo,
-                descripcion = descripcion,
-                fecha = fechaConvertida,
-                hora = horaConvertida,
-                prioridad = prioridadSeleccionada,
-                categoriaId = categoriaSeleccionada?.id,
-                recordatorio = recordatorioSeleccionado,
-                estadoTarea = EstadoTarea.PENDIENTE
-            )
-
             binding.btnGuardarTarea.isEnabled = false
 
-            val repositorio = ActividadRepository(
-                OrganizaMeDatabase.obtener(applicationContext).actividadDao()
-            )
+            if (actividadEditando == null) {
 
-            repositorio.guardar(nuevaTarea) { resultado ->
-                runOnUiThread {
-                    resultado
-                        .onSuccess {
-                            setResult(RESULT_OK)
-                            finish()
-                        }
-                        .onFailure {
-                            binding.btnGuardarTarea.isEnabled = true
-                            Toast.makeText(
-                                this,
-                                "No se pudo guardar la tarea",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
+                // CREAR una tarea nueva
+                val nuevaTarea = Actividad(
+                    tipo = TipoActividad.TAREA,
+                    titulo = titulo,
+                    descripcion = descripcion,
+                    fecha = fechaConvertida,
+                    hora = horaConvertida,
+                    prioridad = prioridadSeleccionada,
+                    categoriaId = categoriaSeleccionada?.id,
+                    recordatorio = recordatorioSeleccionado,
+                    estadoTarea = EstadoTarea.PENDIENTE
+                )
+
+                repositorio.guardar(nuevaTarea) { resultado ->
+                    runOnUiThread {
+                        resultado
+                            .onSuccess {
+                                setResult(RESULT_OK)
+                                finish()
+                            }
+                            .onFailure {
+                                binding.btnGuardarTarea.isEnabled = true
+
+                                Toast.makeText(
+                                    this,
+                                    "No se pudo guardar la tarea",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                    }
+                }
+
+            } else {
+
+                // EDITAR la tarea existente
+                val tareaActualizada = actividadEditando!!.copy(
+                    titulo = titulo,
+                    descripcion = descripcion,
+                    fecha = fechaConvertida,
+                    hora = horaConvertida,
+                    prioridad = prioridadSeleccionada,
+                    categoriaId = categoriaSeleccionada?.id,
+                    recordatorio = recordatorioSeleccionado,
+                    fechaModificacion = Instant.now()
+                )
+
+                repositorio.actualizar(tareaActualizada) { resultado ->
+                    runOnUiThread {
+                        resultado
+                            .onSuccess {
+                                setResult(RESULT_OK)
+                                finish()
+                            }
+                            .onFailure {
+                                binding.btnGuardarTarea.isEnabled = true
+
+                                Toast.makeText(
+                                    this,
+                                    "No se pudo actualizar la tarea",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                    }
                 }
             }
         }

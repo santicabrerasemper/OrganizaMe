@@ -29,4 +29,43 @@ class ActividadRepository(
     private companion object {
         val ejecutor = Executors.newSingleThreadExecutor()
     }
+
+    fun actualizar(
+        actividad: Actividad,
+        alCompletar: (Result<Unit>) -> Unit
+    ) {
+        ejecutor.execute {
+            alCompletar(
+                runCatching {
+                    actividadDao.actualizar(actividad)
+                }
+            )
+        }
+    }
+
+    fun eliminar(
+        actividad: Actividad,
+        alCompletar: (Result<Unit>) -> Unit
+    ) {
+        ejecutor.execute {
+            alCompletar(
+                runCatching {
+                    actividadDao.eliminar(actividad)
+                }
+            )
+        }
+    }
+
+    fun obtenerPorId(
+        id: Long,
+        alCompletar: (Result<Actividad?>) -> Unit
+    ) {
+        ejecutor.execute {
+            alCompletar(
+                runCatching {
+                    actividadDao.obtenerPorId(id)
+                }
+            )
+        }
+    }
 }

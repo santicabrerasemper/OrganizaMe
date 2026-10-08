@@ -3,12 +3,21 @@ package com.santi.organizame.modelo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
+import androidx.room.Delete
 
 @Dao
 interface ActividadDao {
 
     @Insert
     fun insertar(actividad: Actividad): Long
+
+    @Update
+    fun actualizar(actividad: Actividad)
+
+    @Delete
+    fun eliminar(actividad: Actividad)
+
 
     @Query(
         """
@@ -24,4 +33,7 @@ interface ActividadDao {
         """
     )
     fun obtenerTodas(): List<Actividad>
+
+    @Query("SELECT * FROM actividades WHERE id = :id LIMIT 1")
+    fun obtenerPorId(id: Long): Actividad?
 }
