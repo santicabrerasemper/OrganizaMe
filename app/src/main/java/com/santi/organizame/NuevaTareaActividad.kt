@@ -1,6 +1,5 @@
 package com.santi.organizame
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.santi.organizame.databinding.ActividadNuevaTareaBinding
@@ -16,6 +15,9 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
+import android.widget.Toast
+import com.santi.organizame.modelo.ActividadRepository
+import com.santi.organizame.modelo.OrganizaMeDatabase
 
 class NuevaTareaActividad : AppCompatActivity() {
 
@@ -162,27 +164,29 @@ class NuevaTareaActividad : AppCompatActivity() {
                 estadoTarea = EstadoTarea.PENDIENTE
             )
 
-            val resultado = Intent()
+            binding.btnGuardarTarea.isEnabled = false
 
-            resultado.putExtra("titulo", nuevaTarea.titulo)
-            resultado.putExtra("descripcion", nuevaTarea.descripcion)
-            resultado.putExtra("fecha", nuevaTarea.fecha?.format(FORMATO_FECHA).orEmpty())
-            resultado.putExtra("hora", nuevaTarea.hora?.format(FORMATO_HORA).orEmpty())
-            resultado.putExtra("prioridad", nuevaTarea.prioridad.name)
-            resultado.putExtra(
-                "categoria",
-                categoriaSeleccionada?.nombre ?: "Sin categoría"
+            val repositorio = ActividadRepository(
+                OrganizaMeDatabase.obtener(applicationContext).actividadDao()
             )
-            resultado.putExtra(
-                "recordatorio",
-                binding.recordatorioTarea.selectedItem.toString()
-            )
-            resultado.putExtra("estado", nuevaTarea.estadoTarea?.name)
 
-
-            setResult(RESULT_OK, resultado)
-
-            finish()
+            repositorio.guardar(nuevaTarea) { resultado ->
+                runOnUiThread {
+                    resultado
+                        .onSuccess {
+                            setResult(RESULT_OK)
+                            finish()
+                        }
+                        .onFailure {
+                            binding.btnGuardarTarea.isEnabled = true
+                            Toast.makeText(
+                                this,
+                                "No se pudo guardar la tarea",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                }
+            }
         }
     }
 

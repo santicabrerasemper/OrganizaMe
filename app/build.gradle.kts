@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -46,5 +47,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.room.runtime)
     testImplementation(libs.junit)
+    ksp(libs.room.compiler)
 }
 

@@ -6,46 +6,19 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import com.santi.organizame.databinding.ActivityMainBinding
 import com.santi.organizame.modelo.Actividad
-import com.santi.organizame.modelo.EstadoTarea
-import com.santi.organizame.modelo.Prioridad
-import com.santi.organizame.modelo.TipoActividad
-import java.time.LocalDate
-import java.time.LocalTime
+import com.santi.organizame.modelo.ActividadRepository
+import com.santi.organizame.modelo.OrganizaMeDatabase
 import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var actividadRepository: ActividadRepository
 
     private val nuevaTareaLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { resultado ->
-
             if (resultado.resultCode == RESULT_OK) {
-
-                val datos = resultado.data
-
-                val titulo = datos?.getStringExtra("titulo")
-                val descripcion = datos?.getStringExtra("descripcion")
-                val fecha = datos?.getStringExtra("fecha")
-                val hora = datos?.getStringExtra("hora")
-                val prioridad = datos?.getStringExtra("prioridad")
-                val categoria = datos?.getStringExtra("categoria")
-                val recordatorio = datos?.getStringExtra("recordatorio")
-                val estado = datos?.getStringExtra("estado")
-
-
-                binding.statusText.text = """
-                    $titulo
-                    $descripcion
-
-                    Fecha: $fecha
-                    Hora: $hora
-                    Prioridad: $prioridad
-                     Categoría: $categoria
-                     Recordatorio: $recordatorio
-
-                    Estado: $estado
-                """.trimIndent()
+                cargarActividades()
             }
         }
 
@@ -55,36 +28,66 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val tareaPrueba = Actividad(
-            tipo = TipoActividad.TAREA,
-            titulo = "Estudiar inglés",
-            descripcion = "Repasar unidad 4",
-            fecha = LocalDate.of(2026, 10, 5),
-            hora = LocalTime.of(18, 0),
-            prioridad = Prioridad.ALTA,
-            estadoTarea = EstadoTarea.PENDIENTE
+        actividadRepository = ActividadRepository(
+            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
         )
 
-        binding.statusText.text = """
-            ${tareaPrueba.titulo}
-            ${tareaPrueba.descripcion}
-
-            Fecha: ${tareaPrueba.fecha?.format(FORMATO_FECHA)}
-            Hora: ${tareaPrueba.hora?.format(FORMATO_HORA)}
-            Prioridad: ${tareaPrueba.prioridad}
-            Estado: ${tareaPrueba.estadoTarea}
-        """.trimIndent()
-
         binding.btnNuevaTarea.setOnClickListener {
-
             val intent = Intent(this, NuevaTareaActividad::class.java)
-
             nuevaTareaLauncher.launch(intent)
+        }
+
+        cargarActividades()
+    }
+
+    private fun cargarActividades() {
+        actividadRepository.obtenerTodas { resultado ->
+            runOnUiThread {
+                resultado
+                    .onSuccess { actividades ->
+                        binding.statusText.text =
+                            if (actividades.isEmpty()) {
+                                "Todavía no hay tareas guardadas."
+                            } else {
+                                actividades.joinToString("\n\n") { formatearActividad(it) }
+                            }
+                    }
+                    .onFailure {
+                        binding.statusText.text =
+                            "No se pudieron cargar las tareas."
+                    }
+            }
         }
     }
 
+    private fun formatearActividad(actividad: Actividad): String =
+        buildString {
+            append(actividad.titulo)
+
+            actividad.descripcion
+                ?.takeIf { it.isNotBlank() }
+                ?.let { append("\n").append(it) }
+
+            actividad.fecha?.let {
+                append("\nFecha: ").append(it.format(FORMATO_FECHA))
+            }
+
+            actividad.hora?.let {
+                append("\nHora: ").append(it.format(FORMATO_HORA))
+            }
+
+            append("\nPrioridad: ").append(actividad.prioridad)
+
+            actividad.estadoTarea?.let {
+                append("\nEstado: ").append(it)
+            }
+        }
+
     private companion object {
-        val FORMATO_FECHA: DateTimeFormatter = DateTimeFormatter.ofPattern("dd/MM/uuuu")
-        val FORMATO_HORA: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+        val FORMATO_FECHA: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd/MM/uuuu")
+
+        val FORMATO_HORA: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("HH:mm")
     }
 }
