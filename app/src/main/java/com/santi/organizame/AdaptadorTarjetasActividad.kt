@@ -6,11 +6,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.santi.organizame.databinding.TarjetaActividadBinding
 import com.santi.organizame.modelo.Actividad
 import java.time.format.DateTimeFormatter
+import com.santi.organizame.modelo.EstadoTarea
 
 class AdaptadorTarjetasActividad(
     private var actividades: List<Actividad>,
     private val alEditar: (Actividad) -> Unit,
-    private val alEliminar: (Actividad) -> Unit
+    private val alEliminar: (Actividad) -> Unit,
+    private val alCambiarEstado: (Actividad) -> Unit
 ) : RecyclerView.Adapter<AdaptadorTarjetasActividad.ActividadViewHolder>() {
 
     class ActividadViewHolder(
@@ -38,6 +40,16 @@ class AdaptadorTarjetasActividad(
         val actividad = actividades[position]
 
         holder.binding.txtTituloActividad.text = actividad.titulo
+        holder.binding.btnCompletarActividad.text =
+            if (actividad.estadoTarea == EstadoTarea.PENDIENTE) {
+                "Completar"
+            } else {
+                "Reabrir"
+            }
+
+        holder.binding.btnCompletarActividad.setOnClickListener {
+            alCambiarEstado(actividad)
+        }
 
         holder.binding.txtDatosActividad.text = buildString {
 

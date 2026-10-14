@@ -12,6 +12,9 @@ import com.santi.organizame.modelo.AnticipacionRecordatorio
 import java.time.format.DateTimeFormatter
 import android.view.View
 import android.widget.Toast
+import com.santi.organizame.modelo.EstadoTarea
+import java.time.Instant
+
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
 
@@ -43,9 +46,7 @@ class MainActivity : AppCompatActivity() {
 
             alEditar = { actividad ->
                 val intent = Intent(this, NuevaTareaActividad::class.java)
-
                 intent.putExtra("actividadId", actividad.id)
-
                 nuevaTareaLauncher.launch(intent)
             },
 
@@ -74,8 +75,47 @@ class MainActivity : AppCompatActivity() {
                     }
                     .setNegativeButton("No", null)
                     .show()
+            },
+
+            alCambiarEstado = { actividad ->
+
+                val actividadActualizada =
+                    if (actividad.estadoTarea == EstadoTarea.PENDIENTE) {
+
+                        actividad.copy(
+                            estadoTarea = EstadoTarea.COMPLETADA,
+                            fechaCompletada = Instant.now(),
+                            fechaModificacion = Instant.now()
+                        )
+
+                    } else {
+
+                        actividad.copy(
+                            estadoTarea = EstadoTarea.PENDIENTE,
+                            fechaCompletada = null,
+                            fechaModificacion = Instant.now()
+                        )
+                    }
+
+                actividadRepository.actualizar(actividadActualizada) { resultado ->
+                    runOnUiThread {
+                        resultado
+                            .onSuccess {
+                                cargarActividades()
+                            }
+                            .onFailure {
+                                Toast.makeText(
+                                    this,
+                                    "No se pudo cambiar el estado de la tarea",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                    }
+                }
             }
         )
+
+
 
         binding.listaActividades.layoutManager = LinearLayoutManager(this)
         binding.listaActividades.adapter = adaptador
