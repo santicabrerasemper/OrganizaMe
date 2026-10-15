@@ -7,6 +7,9 @@ import com.santi.organizame.databinding.TarjetaActividadBinding
 import com.santi.organizame.modelo.Actividad
 import java.time.format.DateTimeFormatter
 import com.santi.organizame.modelo.EstadoTarea
+import android.view.View
+import com.santi.organizame.modelo.TipoActividad
+import java.time.temporal.IsoFields
 
 class AdaptadorTarjetasActividad(
     private var actividades: List<Actividad>,
@@ -40,18 +43,30 @@ class AdaptadorTarjetasActividad(
         val actividad = actividades[position]
 
         holder.binding.txtTituloActividad.text = actividad.titulo
-        holder.binding.btnCompletarActividad.text =
-            if (actividad.estadoTarea == EstadoTarea.PENDIENTE) {
-                "Completar"
-            } else {
-                "Reabrir"
-            }
 
-        holder.binding.btnCompletarActividad.setOnClickListener {
-            alCambiarEstado(actividad)
+        val esTarea = actividad.tipo == TipoActividad.TAREA
+
+        holder.binding.btnCompletarActividad.visibility =
+            if (esTarea) View.VISIBLE else View.GONE
+
+        if (esTarea){
+            holder.binding.btnCompletarActividad.text =
+                if (actividad.estadoTarea == EstadoTarea.PENDIENTE) {
+                    "Completar"
+                } else {
+                    "Reabrir"
+                }
+
+            holder.binding.btnCompletarActividad.setOnClickListener {
+                alCambiarEstado(actividad)
+            }
         }
 
         holder.binding.txtDatosActividad.text = buildString {
+
+            append("Tipo: ")
+            append(if (actividad.tipo == TipoActividad.TAREA) "Tarea" else "Evento")
+            append("\n")
 
             actividad.descripcion?.takeIf { it.isNotBlank() }?.let {
                 append(it)

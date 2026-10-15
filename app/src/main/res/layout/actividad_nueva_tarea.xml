@@ -32,6 +32,17 @@
                 android:textStyle="bold"
                 android:layout_marginBottom="24dp" />
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Tipo de Actividad" />
+
+            <Spinner
+                android:id="@+id/tipoActividad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
             <EditText
                 android:id="@+id/tituloTarea"
                 android:layout_width="match_parent"

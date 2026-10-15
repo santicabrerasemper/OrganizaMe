@@ -32,6 +32,24 @@ class NuevaTareaActividad : AppCompatActivity() {
         binding = ActividadNuevaTareaBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val tiposActividad = TipoActividad.values().toList()
+
+        val nombresTipos = tiposActividad.map { tipo ->
+            if (tipo == TipoActividad.TAREA) "Tarea" else "Evento"
+        }
+
+        val adaptadorTipos = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            nombresTipos
+        )
+
+        adaptadorTipos.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+
+        binding.tipoActividad.adapter = adaptadorTipos
+
         repositorio = ActividadRepository(
             OrganizaMeDatabase.obtener(applicationContext).actividadDao()
         )
@@ -168,7 +186,8 @@ class NuevaTareaActividad : AppCompatActivity() {
                 Prioridad.valueOf(binding.prioridadTarea.selectedItem.toString())
             val categoriaSeleccionada =
                 categorias[binding.categoriaTarea.selectedItemPosition]
-
+            val tipoSeleccionado =
+                TipoActividad.values()[binding.tipoActividad.selectedItemPosition]
             val recordatorioSeleccionado =
                 when (binding.recordatorioTarea.selectedItemPosition) {
 
@@ -184,6 +203,11 @@ class NuevaTareaActividad : AppCompatActivity() {
             // Validar título
             if (titulo.isBlank()) {
                 binding.tituloTarea.error = "El título es obligatorio"
+                return@setOnClickListener
+            }
+
+            if(tipoSeleccionado == TipoActividad.EVENTO && fecha.isBlank()){
+                binding.fechaTarea.error = "La fecha es obligatoria para un evento"
                 return@setOnClickListener
             }
 
@@ -222,8 +246,8 @@ class NuevaTareaActividad : AppCompatActivity() {
             if (actividadEditando == null) {
 
                 // CREAR una tarea nueva
-                val nuevaTarea = Actividad(
-                    tipo = TipoActividad.TAREA,
+                val nuevaActividad = Actividad(
+                    tipo = tipoSeleccionado,
                     titulo = titulo,
                     descripcion = descripcion,
                     fecha = fechaConvertida,
@@ -231,10 +255,15 @@ class NuevaTareaActividad : AppCompatActivity() {
                     prioridad = prioridadSeleccionada,
                     categoriaId = categoriaSeleccionada?.id,
                     recordatorio = recordatorioSeleccionado,
-                    estadoTarea = EstadoTarea.PENDIENTE
+                    estadoTarea =
+                        if (tipoSeleccionado == TipoActividad.TAREA) {
+                            EstadoTarea.PENDIENTE
+                        } else {
+                            null
+                        }
                 )
 
-                repositorio.guardar(nuevaTarea) { resultado ->
+                repositorio.guardar(nuevaActividad) { resultado ->
                     runOnUiThread {
                         resultado
                             .onSuccess {
