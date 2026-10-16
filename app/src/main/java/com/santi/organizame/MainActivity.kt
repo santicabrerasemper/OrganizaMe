@@ -14,6 +14,7 @@ import android.view.View
 import android.widget.Toast
 import com.santi.organizame.modelo.EstadoTarea
 import java.time.Instant
+import com.santi.organizame.modelo.TipoActividad
 
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -112,10 +113,16 @@ class MainActivity : AppCompatActivity() {
                             }
                     }
                 }
+            },
+
+            alVerDetalle = { actividad ->
+                AlertDialog.Builder(this)
+                    .setTitle("Detalle de la actividad")
+                    .setMessage(formatearActividad(actividad))
+                    .setPositiveButton("Cerrar", null)
+                    .show()
             }
         )
-
-
 
         binding.listaActividades.layoutManager = LinearLayoutManager(this)
         binding.listaActividades.adapter = adaptador
@@ -156,6 +163,10 @@ class MainActivity : AppCompatActivity() {
     private fun formatearActividad(actividad: Actividad): String =
         buildString {
             append(actividad.titulo)
+
+            append("\nTipo: ").append(
+                if (actividad.tipo == TipoActividad.TAREA) "Tarea" else "Evento"
+            )
 
             actividad.descripcion
                 ?.takeIf { it.isNotBlank() }

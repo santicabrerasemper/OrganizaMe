@@ -15,7 +15,8 @@ class AdaptadorTarjetasActividad(
     private var actividades: List<Actividad>,
     private val alEditar: (Actividad) -> Unit,
     private val alEliminar: (Actividad) -> Unit,
-    private val alCambiarEstado: (Actividad) -> Unit
+    private val alCambiarEstado: (Actividad) -> Unit,
+    private val alVerDetalle: (Actividad) -> Unit
 ) : RecyclerView.Adapter<AdaptadorTarjetasActividad.ActividadViewHolder>() {
 
     class ActividadViewHolder(
@@ -94,6 +95,10 @@ class AdaptadorTarjetasActividad(
 
         holder.binding.btnEliminarActividad.setOnClickListener {
             alEliminar(actividad)
+        }
+
+        holder.binding.btnVerDetalle.setOnClickListener {
+            alVerDetalle(actividad)
         }
     }
 
