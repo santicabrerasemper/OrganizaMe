@@ -53,7 +53,7 @@ class MainActivity : AppCompatActivity() {
             alEliminar = { actividad ->
 
                 AlertDialog.Builder(this)
-                    .setTitle("Eliminar tarea")
+                    .setTitle("Eliminar actividad")
                     .setMessage("¿Seguro que querés eliminar \"${actividad.titulo}\"?")
                     .setPositiveButton("Sí") { _, _ ->
 
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                                     .onFailure {
                                         Toast.makeText(
                                             this,
-                                            "No se pudo eliminar la tarea",
+                                            "No se pudo eliminar la actividad",
                                             Toast.LENGTH_LONG
                                         ).show()
                                     }

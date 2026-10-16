@@ -127,6 +127,10 @@ class NuevaTareaActividad : AppCompatActivity() {
                             if (actividad != null) {
                                 actividadEditando = actividad
 
+                                binding.tipoActividad.setSelection(
+                                    tiposActividad.indexOf(actividad.tipo)
+                                )
+
                                 binding.tituloTarea.setText(actividad.titulo)
                                 binding.descripcionTarea.setText(actividad.descripcion ?: "")
 
@@ -284,8 +288,11 @@ class NuevaTareaActividad : AppCompatActivity() {
 
             } else {
 
-                // EDITAR la tarea existente
-                val tareaActualizada = actividadEditando!!.copy(
+                val actividadOriginal = actividadEditando!!
+                val esTarea = tipoSeleccionado == TipoActividad.TAREA
+
+                val actividadActualizada = actividadOriginal.copy(
+                    tipo = tipoSeleccionado,
                     titulo = titulo,
                     descripcion = descripcion,
                     fecha = fechaConvertida,
@@ -293,10 +300,18 @@ class NuevaTareaActividad : AppCompatActivity() {
                     prioridad = prioridadSeleccionada,
                     categoriaId = categoriaSeleccionada?.id,
                     recordatorio = recordatorioSeleccionado,
+                    estadoTarea =
+                        if (esTarea) {
+                            actividadOriginal.estadoTarea ?: EstadoTarea.PENDIENTE
+                        } else {
+                            null
+                        },
+                    fechaCompletada =
+                        if (esTarea) actividadOriginal.fechaCompletada else null,
                     fechaModificacion = Instant.now()
                 )
 
-                repositorio.actualizar(tareaActualizada) { resultado ->
+                repositorio.actualizar(actividadActualizada) { resultado ->
                     runOnUiThread {
                         resultado
                             .onSuccess {
@@ -308,7 +323,7 @@ class NuevaTareaActividad : AppCompatActivity() {
 
                                 Toast.makeText(
                                     this,
-                                    "No se pudo actualizar la tarea",
+                                    "No se pudo actualizar la actividad",
                                     Toast.LENGTH_LONG
                                 ).show()
                             }
