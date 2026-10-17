@@ -49,7 +49,11 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, NuevaTareaActividad::class.java)
                 intent.putExtra("actividadId", actividad.id)
                 nuevaTareaLauncher.launch(intent)
+
+
+
             },
+
 
             alEliminar = { actividad ->
 
@@ -132,6 +136,10 @@ class MainActivity : AppCompatActivity() {
             nuevaTareaLauncher.launch(intent)
         }
 
+        binding.btnCategorias.setOnClickListener {
+            val intent = Intent(this, CategoriasActividad::class.java)
+            startActivity(intent)
+        }
 
 
         cargarActividades()

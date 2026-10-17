@@ -14,6 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 abstract class OrganizaMeDatabase : RoomDatabase() {
 
     abstract fun actividadDao(): ActividadDao
+    abstract fun categoriaDao(): CategoriaDao
 
     companion object {
         @Volatile
