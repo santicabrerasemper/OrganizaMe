@@ -32,6 +32,10 @@ class NuevaTareaActividad : AppCompatActivity() {
         binding = ActividadNuevaTareaBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.btnVolverNuevaTarea.setOnClickListener {
+            finish()
+        }
+
         val tiposActividad = TipoActividad.values().toList()
 
         val nombresTipos = tiposActividad.map { tipo ->
