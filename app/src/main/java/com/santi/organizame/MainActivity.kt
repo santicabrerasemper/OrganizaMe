@@ -9,6 +9,7 @@ import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.AnticipacionRecordatorio
+import com.santi.organizame.modelo.CategoriaRepository
 import java.time.format.DateTimeFormatter
 import android.view.View
 import android.widget.Toast
@@ -23,6 +24,8 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var actividadRepository: ActividadRepository
+
+    private lateinit var categoriaRepository: CategoriaRepository
 
     private lateinit var adaptador: AdaptadorTarjetasActividad
 
@@ -41,6 +44,9 @@ class MainActivity : AppCompatActivity() {
 
         actividadRepository = ActividadRepository(
             OrganizaMeDatabase.obtener(applicationContext).actividadDao()
+        )
+        categoriaRepository = CategoriaRepository(
+            OrganizaMeDatabase.obtener(applicationContext).categoriaDao()
         )
         adaptador = AdaptadorTarjetasActividad(
             actividades = emptyList(),
@@ -120,11 +126,29 @@ class MainActivity : AppCompatActivity() {
             },
 
             alVerDetalle = { actividad ->
-                AlertDialog.Builder(this)
-                    .setTitle("Detalle de la actividad")
-                    .setMessage(formatearActividad(actividad))
-                    .setPositiveButton("Cerrar", null)
-                    .show()
+
+                val categoriaId = actividad.categoriaId
+
+                if (categoriaId == null) {
+                    mostrarDetalle(actividad, "Sin categoría")
+                } else {
+                    categoriaRepository.obtenerPorId(categoriaId) { resultado ->
+                        runOnUiThread {
+                            resultado
+                                .onSuccess { categoria ->
+                                    val nombre = categoria?.nombre ?: "Sin categoría"
+                                    mostrarDetalle(actividad, nombre)
+                                }
+                                .onFailure {
+                                    Toast.makeText(
+                                        this,
+                                        "No se pudo consultar la categoría",
+                                        Toast.LENGTH_LONG
+                                    ).show()
+                                }
+                        }
+                    }
+                }
             }
         )
 
@@ -167,8 +191,20 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
-
-    private fun formatearActividad(actividad: Actividad): String =
+    private fun mostrarDetalle(
+        actividad: Actividad,
+        nombreCategoria: String
+    ) {
+        AlertDialog.Builder(this)
+            .setTitle("Detalle de la actividad")
+            .setMessage(formatearActividad(actividad, nombreCategoria))
+            .setPositiveButton("Cerrar", null)
+            .show()
+    }
+    private fun formatearActividad(
+        actividad: Actividad,
+        nombreCategoria: String
+    ): String =
         buildString {
             append(actividad.titulo)
 
@@ -190,9 +226,7 @@ class MainActivity : AppCompatActivity() {
 
             append("\nPrioridad: ").append(actividad.prioridad)
 
-            append("\nCategoría: ").append(
-                nombreCategoria(actividad.categoriaId)
-            )
+            append("\nCategoría: ").append(nombreCategoria)
 
             append("\nRecordatorio: ").append(
                 nombreRecordatorio(actividad.recordatorio)
@@ -203,13 +237,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private fun nombreCategoria(categoriaId: Long?): String =
-        when (categoriaId) {
-            1L -> "Personal"
-            2L -> "Estudio"
-            3L -> "Trabajo"
-            else -> "Sin categoría"
-        }
+
 
     private fun nombreRecordatorio(
         recordatorio: AnticipacionRecordatorio?

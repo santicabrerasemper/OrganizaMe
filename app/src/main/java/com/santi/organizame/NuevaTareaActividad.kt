@@ -17,6 +17,7 @@ import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
 import android.widget.Toast
 import java.time.Instant
+import com.santi.organizame.modelo.CategoriaRepository
 import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.OrganizaMeDatabase
 
@@ -76,21 +77,12 @@ class NuevaTareaActividad : AppCompatActivity() {
             Prioridad.values().indexOf(Prioridad.MEDIA)
         )
 
-        val categorias = listOf(
-            null,
-            Categoria(1, "Personal", "#4CAF50"),
-            Categoria(2, "Estudio", "#2196F3"),
-            Categoria(3, "Trabajo", "#FF9800")
-        )
-
-        val nombresCategorias = categorias.map {
-            it?.nombre ?: "Sin categoría"
-        }
+        var categorias: List<Categoria?> = listOf(null)
 
         val adaptadorCategorias = ArrayAdapter(
             this,
             android.R.layout.simple_spinner_item,
-            nombresCategorias
+            mutableListOf("Sin categoría")
         )
 
         adaptadorCategorias.setDropDownViewResource(
@@ -98,6 +90,52 @@ class NuevaTareaActividad : AppCompatActivity() {
         )
 
         binding.categoriaTarea.adapter = adaptadorCategorias
+
+// Repositorio para consultar las categorías de Room
+        val categoriaRepository = CategoriaRepository(
+            OrganizaMeDatabase.obtener(applicationContext).categoriaDao()
+        )
+
+// Evitamos guardar hasta terminar de cargar las categorías
+        binding.btnGuardarTarea.isEnabled = false
+        binding.categoriaTarea.isEnabled = false
+
+        categoriaRepository.obtenerTodas { resultado ->
+            runOnUiThread {
+                resultado
+                    .onSuccess { categoriasGuardadas ->
+
+                        categorias = listOf(null) + categoriasGuardadas
+
+                        adaptadorCategorias.clear()
+                        adaptadorCategorias.addAll(
+                            categorias.map { it?.nombre ?: "Sin categoría" }
+                        )
+                        adaptadorCategorias.notifyDataSetChanged()
+
+                        // Si estamos editando, recuperar la categoría seleccionada
+                        actividadEditando?.let { actividad ->
+                            val posicion = categorias.indexOfFirst {
+                                it?.id == actividad.categoriaId
+                            }
+
+                            binding.categoriaTarea.setSelection(
+                                if (posicion >= 0) posicion else 0
+                            )
+                        }
+
+                        binding.categoriaTarea.isEnabled = true
+                        binding.btnGuardarTarea.isEnabled = true
+                    }
+                    .onFailure {
+                        Toast.makeText(
+                            this,
+                            "No se pudieron cargar las categorías",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            }
+        }
 
 
         val opcionesRecordatorio = listOf(
