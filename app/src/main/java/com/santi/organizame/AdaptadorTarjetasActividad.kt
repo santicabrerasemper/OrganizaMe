@@ -46,10 +46,11 @@ class AdaptadorTarjetasActividad(
         val fecha = actividad.fecha
         val esInicioDeGrupo =
             position == 0 || actividades[position - 1].fecha != fecha
-        if (fecha != null && esInicioDeGrupo){
+        if (esInicioDeGrupo) {
             holder.binding.txtFechaGrupo.visibility = View.VISIBLE
-            holder.binding.txtFechaGrupo.text = fecha.format(FORMATO_FECHA)
-        }else{
+            holder.binding.txtFechaGrupo.text =
+                fecha?.format(FORMATO_FECHA) ?: "Sin fecha"
+        } else {
             holder.binding.txtFechaGrupo.visibility = View.GONE
         }
 
