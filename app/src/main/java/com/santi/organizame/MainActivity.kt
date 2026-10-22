@@ -165,6 +165,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
         }
 
+        binding.btnCalendario.setOnClickListener {
+            val intent = Intent(this, CalendarioActividad::class.java)
+            startActivity(intent)
+        }
+
 
         cargarActividades()
     }
