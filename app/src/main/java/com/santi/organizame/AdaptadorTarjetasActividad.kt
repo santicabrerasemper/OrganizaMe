@@ -81,6 +81,7 @@ class AdaptadorTarjetasActividad(
             append("\n")
 
             actividad.descripcion?.takeIf { it.isNotBlank() }?.let {
+                append("Descripción: ")
                 append(it)
                 append("\n")
             }

@@ -4,10 +4,12 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import java.time.LocalDate
 import com.santi.organizame.databinding.ItemDiaCalendarioBinding
 
 class AdaptadorDiasCalendario(
-    private var dias: List<DiaCalendario>
+    private var dias: List<DiaCalendario>,
+    private val alSeleccionarDia: (LocalDate) -> Unit
 ) : RecyclerView.Adapter<AdaptadorDiasCalendario.DiaViewHolder>() {
 
     class DiaViewHolder(
@@ -39,6 +41,14 @@ class AdaptadorDiasCalendario(
         binding.textoNumeroDia.text = dia.fecha.dayOfMonth.toString()
         binding.indicadorActividad.visibility =
             if (dia.tieneActividades) View.VISIBLE else View.GONE
+
+        binding.root.setOnClickListener {
+            dia.fecha?.let { fecha ->
+                alSeleccionarDia(fecha)
+            }
+        }
+
+
     }
 
     override fun getItemCount(): Int = dias.size

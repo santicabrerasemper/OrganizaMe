@@ -11,6 +11,8 @@ import java.util.Locale
 import android.widget.Toast
 import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.ActividadRepository
+import android.widget.Button
+import androidx.appcompat.app.AlertDialog
 import com.santi.organizame.modelo.OrganizaMeDatabase
 
 class CalendarioActividad : AppCompatActivity() {
@@ -27,11 +29,17 @@ class CalendarioActividad : AppCompatActivity() {
         binding = ActivityCalendarioBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        findViewById<Button>(R.id.btnVolverCalendario).setOnClickListener {
+            finish()
+        }
+
         actividadRepository = ActividadRepository(
             OrganizaMeDatabase.obtener(applicationContext).actividadDao()
         )
 
-        adaptador = AdaptadorDiasCalendario(emptyList())
+        adaptador = AdaptadorDiasCalendario(emptyList()) { fecha ->
+            mostrarActividadesDelDia(fecha)
+        }
         binding.listaDiasCalendario.layoutManager = GridLayoutManager(this, 7)
         binding.listaDiasCalendario.adapter = adaptador
 
@@ -82,6 +90,48 @@ class CalendarioActividad : AppCompatActivity() {
         }
 
         adaptador.actualizarLista(dias)
+    }
+
+    private fun mostrarActividadesDelDia(fecha: LocalDate) {
+
+        val actividadesDelDia = actividades.filter {
+            it.fecha == fecha
+        }
+
+        val mensaje = if (actividadesDelDia.isEmpty()) {
+
+            "No hay actividades para este día."
+
+        } else {
+
+            actividadesDelDia.mapIndexed { indice, actividad ->
+
+                buildString {
+                    append("${indice + 1}. ${actividad.titulo}\n")
+
+                    actividad.descripcion?.takeIf { it.isNotBlank() }?.let {
+                        append("Descripción: $it\n")
+                    }
+
+                    actividad.hora?.let {
+                        append("Hora: $it\n")
+                    }
+
+                    append("Prioridad: ${actividad.prioridad}\n")
+
+                    actividad.estadoTarea?.let {
+                        append("Estado: $it\n")
+                    }
+                }.trimEnd()
+
+            }.joinToString("\n\n")
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("Actividades del ${fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}")
+            .setMessage(mensaje)
+            .setPositiveButton("Cerrar", null)
+            .show()
     }
 
     private fun cargarActividades() {

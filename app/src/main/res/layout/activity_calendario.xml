@@ -7,6 +7,14 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <Button
+        android:id="@+id/btnVolverCalendario"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="← Volver"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:id="@+id/tituloCalendario"
         android:layout_width="wrap_content"
@@ -15,7 +23,8 @@
         android:textSize="28sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/btnVolverCalendario"/>
 
     <LinearLayout
         android:id="@+id/barraMes"

@@ -39,6 +39,8 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -154,6 +156,7 @@ class MainActivity : AppCompatActivity() {
 
         binding.listaActividades.layoutManager = LinearLayoutManager(this)
         binding.listaActividades.adapter = adaptador
+
 
         binding.btnNuevaTarea.setOnClickListener {
             val intent = Intent(this, NuevaTareaActividad::class.java)
