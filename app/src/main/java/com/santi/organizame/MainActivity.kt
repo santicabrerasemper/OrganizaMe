@@ -16,6 +16,9 @@ import android.widget.Toast
 import com.santi.organizame.modelo.EstadoTarea
 import java.time.Instant
 import com.santi.organizame.modelo.TipoActividad
+import android.widget.ArrayAdapter
+import android.widget.AdapterView
+import com.santi.organizame.modelo.Categoria
 
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,6 +27,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var actividadRepository: ActividadRepository
+
+    private var actividadesGuardadas: List<Actividad> = emptyList()
+    private var categoriasFiltro: List<Categoria> = emptyList()
 
     private lateinit var categoriaRepository: CategoriaRepository
 
@@ -157,24 +163,81 @@ class MainActivity : AppCompatActivity() {
         binding.listaActividades.layoutManager = LinearLayoutManager(this)
         binding.listaActividades.adapter = adaptador
 
+        binding.filtroCategoria.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
 
-        binding.btnNuevaTarea.setOnClickListener {
-            val intent = Intent(this, NuevaTareaActividad::class.java)
-            nuevaTareaLauncher.launch(intent)
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    aplicarFiltro()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
+
+
+    binding.btnNuevaTarea.setOnClickListener {
+        val intent = Intent(this, NuevaTareaActividad::class.java)
+        nuevaTareaLauncher.launch(intent)
+    }
+
+    binding.btnCategorias.setOnClickListener {
+        val intent = Intent(this, CategoriasActividad::class.java)
+        startActivity(intent)
+    }
+
+    binding.btnCalendario.setOnClickListener {
+        val intent = Intent(this, CalendarioActividad::class.java)
+        startActivity(intent)
+    }
+
+
+    cargarActividades()
+}
+
+override fun onResume() {
+    super.onResume()
+    cargarCategoriasFiltro()
+}
+
+    private fun cargarCategoriasFiltro() {
+
+        categoriaRepository.obtenerTodas { resultado ->
+            runOnUiThread {
+                resultado
+                    .onSuccess { categorias ->
+
+                        categoriasFiltro = categorias
+
+                        val opciones = listOf(
+                            "Todas las categorías",
+                            "Sin categoría"
+                        ) + categorias.map { it.nombre }
+
+                        val adaptadorFiltro = ArrayAdapter(
+                            this,
+                            android.R.layout.simple_spinner_item,
+                            opciones
+                        )
+
+                        adaptadorFiltro.setDropDownViewResource(
+                            android.R.layout.simple_spinner_dropdown_item
+                        )
+
+                        binding.filtroCategoria.adapter = adaptadorFiltro
+                    }
+                    .onFailure {
+                        Toast.makeText(
+                            this,
+                            "No se pudieron cargar las categorías",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            }
         }
-
-        binding.btnCategorias.setOnClickListener {
-            val intent = Intent(this, CategoriasActividad::class.java)
-            startActivity(intent)
-        }
-
-        binding.btnCalendario.setOnClickListener {
-            val intent = Intent(this, CalendarioActividad::class.java)
-            startActivity(intent)
-        }
-
-
-        cargarActividades()
     }
 
     private fun cargarActividades() {
@@ -182,88 +245,125 @@ class MainActivity : AppCompatActivity() {
             runOnUiThread {
                 resultado
                     .onSuccess { actividades ->
-
-                        if (actividades.isEmpty()) {
-                            binding.statusText.visibility = View.VISIBLE
-                            binding.statusText.text = "Todavía no hay tareas guardadas."
-                        } else {
-                            binding.statusText.visibility = View.GONE
-                        }
-
-                        adaptador.actualizarLista(actividades)
+                        actividadesGuardadas = actividades
+                        aplicarFiltro()
                     }
                     .onFailure {
                         binding.statusText.visibility = View.VISIBLE
-                        binding.statusText.text = "No se pudieron cargar las tareas."
+                        binding.statusText.text =
+                            "No se pudieron cargar las tareas."
                     }
             }
         }
     }
-    private fun mostrarDetalle(
-        actividad: Actividad,
-        nombreCategoria: String
-    ) {
-        AlertDialog.Builder(this)
-            .setTitle("Detalle de la actividad")
-            .setMessage(formatearActividad(actividad, nombreCategoria))
-            .setPositiveButton("Cerrar", null)
-            .show()
+
+private fun aplicarFiltro() {
+
+    val posicion = binding.filtroCategoria.selectedItemPosition
+
+    val actividadesFiltradas = when (posicion) {
+
+        -1, 0 -> actividadesGuardadas
+
+        1 -> actividadesGuardadas.filter {
+            it.categoriaId == null
+        }
+
+        else -> {
+            val categoria = categoriasFiltro.getOrNull(posicion - 2)
+
+            actividadesGuardadas.filter {
+                it.categoriaId == categoria?.id
+            }
+        }
     }
-    private fun formatearActividad(
-        actividad: Actividad,
-        nombreCategoria: String
-    ): String =
-        buildString {
-            append(actividad.titulo)
 
-            append("\nTipo: ").append(
-                if (actividad.tipo == TipoActividad.TAREA) "Tarea" else "Evento"
-            )
+    adaptador.actualizarLista(actividadesFiltradas)
 
-            actividad.descripcion
-                ?.takeIf { it.isNotBlank() }
-                ?.let { append("\n").append(it) }
-
-            actividad.fecha?.let {
-                append("\nFecha: ").append(it.format(FORMATO_FECHA))
-            }
-
-            actividad.hora?.let {
-                append("\nHora: ").append(it.format(FORMATO_HORA))
-            }
-
-            append("\nPrioridad: ").append(actividad.prioridad)
-
-            append("\nCategoría: ").append(nombreCategoria)
-
-            append("\nRecordatorio: ").append(
-                nombreRecordatorio(actividad.recordatorio)
-            )
-
-            actividad.estadoTarea?.let {
-                append("\nEstado: ").append(it)
-            }
-        }
-
-
-
-    private fun nombreRecordatorio(
-        recordatorio: AnticipacionRecordatorio?
-    ): String =
-        when (recordatorio) {
-            AnticipacionRecordatorio.A_LA_HORA -> "A la hora"
-            AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> "10 minutos antes"
-            AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> "30 minutos antes"
-            AnticipacionRecordatorio.UNA_HORA_ANTES -> "1 hora antes"
-            AnticipacionRecordatorio.UN_DIA_ANTES -> "1 día antes"
-            null -> "Sin recordatorio"
-        }
-
-    private companion object {
-        val FORMATO_FECHA: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("dd/MM/uuuu")
-
-        val FORMATO_HORA: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("HH:mm")
+    if (actividadesFiltradas.isEmpty()) {
+        binding.statusText.visibility = View.VISIBLE
+        binding.statusText.text =
+            if (actividadesGuardadas.isEmpty())
+                "Todavía no hay actividades guardadas."
+            else
+                "No hay actividades en esta categoría."
+    } else {
+        binding.statusText.visibility = View.GONE
     }
 }
+
+private fun mostrarDetalle(
+    actividad: Actividad,
+    nombreCategoria: String
+) {
+    AlertDialog.Builder(this)
+        .setTitle("Detalle de la actividad")
+        .setMessage(formatearActividad(actividad, nombreCategoria))
+        .setPositiveButton("Cerrar", null)
+        .show()
+}
+private fun formatearActividad(
+    actividad: Actividad,
+    nombreCategoria: String
+): String =
+    buildString {
+        append(actividad.titulo)
+
+        append("\nTipo: ").append(
+            if (actividad.tipo == TipoActividad.TAREA) "Tarea" else "Evento"
+        )
+
+        actividad.descripcion
+            ?.takeIf { it.isNotBlank() }
+            ?.let { append("\n").append(it) }
+
+        actividad.fecha?.let {
+            append("\nFecha: ").append(it.format(FORMATO_FECHA))
+        }
+
+        actividad.hora?.let {
+            append("\nHora: ").append(it.format(FORMATO_HORA))
+        }
+
+        append("\nPrioridad: ").append(actividad.prioridad)
+
+        append("\nCategoría: ").append(nombreCategoria)
+
+        append("\nRecordatorio: ").append(
+            nombreRecordatorio(actividad.recordatorio)
+        )
+
+        actividad.estadoTarea?.let {
+            append("\nEstado: ").append(it)
+        }
+    }
+
+
+
+private fun nombreRecordatorio(
+    recordatorio: AnticipacionRecordatorio?
+): String =
+    when (recordatorio) {
+        AnticipacionRecordatorio.A_LA_HORA -> "A la hora"
+        AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> "10 minutos antes"
+        AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> "30 minutos antes"
+        AnticipacionRecordatorio.UNA_HORA_ANTES -> "1 hora antes"
+        AnticipacionRecordatorio.UN_DIA_ANTES -> "1 día antes"
+        null -> "Sin recordatorio"
+    }
+
+private companion object {
+    val FORMATO_FECHA: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("dd/MM/uuuu")
+
+    val FORMATO_HORA: DateTimeFormatter =
+        DateTimeFormatter.ofPattern("HH:mm")
+
+        }
+    }
+
+
+
+
+
+

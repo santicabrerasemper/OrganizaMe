@@ -14,6 +14,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.santi.organizame.modelo.Categoria
+import android.widget.LinearLayout
 import com.santi.organizame.modelo.CategoriaRepository
 import com.santi.organizame.modelo.OrganizaMeDatabase
 
@@ -95,9 +96,44 @@ class CategoriasActividad : AppCompatActivity() {
         val campoNombre = EditText(this)
         campoNombre.hint = "Nombre de la categoría"
 
+        val colores = listOf(
+            "Verde" to "#4CAF50",
+            "Azul" to "#2196F3",
+            "Naranja" to "#FF9800",
+            "Rojo" to "#F44336",
+            "Violeta" to "#9C27B0"
+        )
+
+        var colorSeleccionado = "#4CAF50"
+
+        val botonColor = Button(this)
+        botonColor.text = "Color: Verde"
+
+        botonColor.setOnClickListener {
+            val nombres = colores.map { it.first }.toTypedArray()
+
+            AlertDialog.Builder(this)
+                .setTitle("Seleccionar color")
+                .setItems(nombres) { _, posicion ->
+                    colorSeleccionado = colores[posicion].second
+                    botonColor.text = "Color: ${colores[posicion].first}"
+                }
+                .show()
+        }
+
+        val contenedor = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+
+            val margen = (16 * resources.displayMetrics.density).toInt()
+            setPadding(margen, margen, margen, margen)
+
+            addView(campoNombre)
+            addView(botonColor)
+        }
+
         val dialogo = AlertDialog.Builder(this)
             .setTitle("Nueva categoría")
-            .setView(campoNombre)
+            .setView(contenedor)
             .setPositiveButton("Guardar", null)
             .setNegativeButton("Cancelar", null)
             .create()
@@ -113,7 +149,7 @@ class CategoriasActividad : AppCompatActivity() {
                 } else {
                     val nuevaCategoria = Categoria(
                         nombre = nombre,
-                        color = "#4CAF50"
+                        color = colorSeleccionado
                     )
 
                     botonGuardar.isEnabled = false
@@ -148,10 +184,50 @@ class CategoriasActividad : AppCompatActivity() {
         val campoNombre = EditText(this)
         campoNombre.setText(categoria.nombre)
         campoNombre.setSelection(campoNombre.text.length)
+        val colores = listOf(
+            "Verde" to "#4CAF50",
+            "Azul" to "#2196F3",
+            "Naranja" to "#FF9800",
+            "Rojo" to "#F44336",
+            "Violeta" to "#9C27B0"
+        )
+
+        var colorSeleccionado = categoria.color
+
+        val botonColor = Button(this)
+
+        val nombreColor = colores.firstOrNull {
+            it.second.equals(colorSeleccionado, ignoreCase = true)
+        }?.first ?: "Actual"
+
+        botonColor.text = "Color: $nombreColor"
+
+
+        botonColor.setOnClickListener {
+            val nombres = colores.map { it.first }.toTypedArray()
+
+            AlertDialog.Builder(this)
+                .setTitle("Seleccionar color")
+                .setItems(nombres) { _, posicion ->
+                    colorSeleccionado = colores[posicion].second
+                    botonColor.text = "Color: ${colores[posicion].first}"
+                }
+                .show()
+        }
+
+        val contenedor = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+
+            val margen = (16 * resources.displayMetrics.density).toInt()
+            setPadding(margen, margen, margen, margen)
+
+            addView(campoNombre)
+            addView(botonColor)
+        }
 
         val dialogo = AlertDialog.Builder(this)
             .setTitle("Editar categoría")
-            .setView(campoNombre)
+            .setView(contenedor)
             .setPositiveButton("Guardar", null)
             .setNegativeButton("Cancelar", null)
             .create()
@@ -167,7 +243,8 @@ class CategoriasActividad : AppCompatActivity() {
                 } else {
 
                     val categoriaActualizada = categoria.copy(
-                        nombre = nuevoNombre
+                        nombre = nuevoNombre,
+                        color = colorSeleccionado
                     )
 
                     botonGuardar.isEnabled = false

@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import android.graphics.Color
 import com.santi.organizame.modelo.Categoria
 
 class AdaptadorTarjetasCategoria(
@@ -20,6 +21,9 @@ class AdaptadorTarjetasCategoria(
 
         val nombreCategoria: TextView =
             vista.findViewById(R.id.nombreCategoria)
+
+        val indicadorColorCategoria: View =
+            vista.findViewById(R.id.indicadorColorCategoria)
 
         val btnEditar: Button =
             vista.findViewById(R.id.btnEditarCategoria)
@@ -46,6 +50,10 @@ class AdaptadorTarjetasCategoria(
         val categoria = categorias[position]
 
         holder.nombreCategoria.text = categoria.nombre
+
+        holder.indicadorColorCategoria.setBackgroundColor(
+            Color.parseColor(categoria.color)
+        )
 
         holder.btnEditar.setOnClickListener {
             alEditar(categoria)
