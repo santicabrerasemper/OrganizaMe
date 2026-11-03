@@ -18,6 +18,9 @@ import java.time.Instant
 import com.santi.organizame.modelo.TipoActividad
 import android.widget.ArrayAdapter
 import android.widget.AdapterView
+import com.santi.organizame.modelo.Prioridad
+import android.text.Editable
+import android.text.TextWatcher
 import com.santi.organizame.modelo.Categoria
 
 import androidx.appcompat.app.AlertDialog
@@ -178,6 +181,140 @@ class MainActivity : AppCompatActivity() {
                 override fun onNothingSelected(parent: AdapterView<*>?) {}
             }
 
+        val opcionesEstado = listOf(
+            "Todos los estados",
+            "Pendientes",
+            "Completadas"
+        )
+
+        val adaptadorEstado = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            opcionesEstado
+        )
+
+        adaptadorEstado.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+
+        binding.filtroEstado.adapter = adaptadorEstado
+
+        binding.filtroEstado.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    aplicarFiltro()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
+
+        val opcionesPrioridad = listOf(
+            "Todas las prioridades",
+            "Alta",
+            "Media",
+            "Baja"
+        )
+
+        val adaptadorPrioridad = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            opcionesPrioridad
+        )
+
+        adaptadorPrioridad.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+
+        binding.filtroPrioridad.adapter = adaptadorPrioridad
+
+        binding.filtroPrioridad.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    aplicarFiltro()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
+
+        val opcionesTipo = listOf(
+            "Todos los tipos",
+            "Tareas",
+            "Eventos"
+        )
+
+        val adaptadorTipo = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            opcionesTipo
+        )
+
+        adaptadorTipo.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+
+        binding.filtroTipo.adapter = adaptadorTipo
+
+        binding.filtroTipo.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    aplicarFiltro()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) {}
+            }
+
+        binding.buscarTitulo.addTextChangedListener(object : TextWatcher {
+
+            override fun afterTextChanged(texto: Editable?) {
+                aplicarFiltro()
+            }
+
+            override fun beforeTextChanged(
+                s: CharSequence?,
+                start: Int,
+                count: Int,
+                after: Int
+            ) {}
+
+            override fun onTextChanged(
+                s: CharSequence?,
+                start: Int,
+                before: Int,
+                count: Int
+            ) {}
+        })
+
+
+
+        binding.btnMostrarTodas.setOnClickListener {
+
+            binding.filtroCategoria.setSelection(0)
+            binding.filtroEstado.setSelection(0)
+            binding.filtroPrioridad.setSelection(0)
+            binding.filtroTipo.setSelection(0)
+            binding.buscarTitulo.text.clear()
+
+            aplicarFiltro()
+        }
+
 
     binding.btnNuevaTarea.setOnClickListener {
         val intent = Intent(this, NuevaTareaActividad::class.java)
@@ -257,40 +394,97 @@ override fun onResume() {
         }
     }
 
-private fun aplicarFiltro() {
+    private fun aplicarFiltro() {
 
-    val posicion = binding.filtroCategoria.selectedItemPosition
+        val posicionCategoria = binding.filtroCategoria.selectedItemPosition
+        val posicionEstado = binding.filtroEstado.selectedItemPosition
+        val posicionPrioridad = binding.filtroPrioridad.selectedItemPosition
+        val posicionTipo = binding.filtroTipo.selectedItemPosition
 
-    val actividadesFiltradas = when (posicion) {
+        // Filtrar por categoría
+        val actividadesPorCategoria = when (posicionCategoria) {
 
-        -1, 0 -> actividadesGuardadas
+            -1, 0 -> actividadesGuardadas
 
-        1 -> actividadesGuardadas.filter {
-            it.categoriaId == null
-        }
+            1 -> actividadesGuardadas.filter {
+                it.categoriaId == null
+            }
 
-        else -> {
-            val categoria = categoriasFiltro.getOrNull(posicion - 2)
+            else -> {
+                val categoria = categoriasFiltro.getOrNull(posicionCategoria - 2)
 
-            actividadesGuardadas.filter {
-                it.categoriaId == categoria?.id
+                actividadesGuardadas.filter {
+                    it.categoriaId == categoria?.id
+                }
             }
         }
-    }
 
-    adaptador.actualizarLista(actividadesFiltradas)
+        // Filtrar por estado
+        val actividadesPorEstado = when (posicionEstado) {
 
-    if (actividadesFiltradas.isEmpty()) {
-        binding.statusText.visibility = View.VISIBLE
-        binding.statusText.text =
-            if (actividadesGuardadas.isEmpty())
-                "Todavía no hay actividades guardadas."
-            else
-                "No hay actividades en esta categoría."
-    } else {
-        binding.statusText.visibility = View.GONE
+            1 -> actividadesPorCategoria.filter {
+                it.estadoTarea == EstadoTarea.PENDIENTE
+            }
+
+            2 -> actividadesPorCategoria.filter {
+                it.estadoTarea == EstadoTarea.COMPLETADA
+            }
+
+            else -> actividadesPorCategoria
+        }
+
+        // Filtrar por prioridad
+        val actividadesPorPrioridad = when (posicionPrioridad) {
+
+            1 -> actividadesPorEstado.filter {
+                it.prioridad == Prioridad.ALTA
+            }
+
+            2 -> actividadesPorEstado.filter {
+                it.prioridad == Prioridad.MEDIA
+            }
+
+            3 -> actividadesPorEstado.filter {
+                it.prioridad == Prioridad.BAJA
+            }
+
+            else -> actividadesPorEstado
+        }
+
+        // Filtrar por tipo de actividad
+        val actividadesPorTipo = when (posicionTipo) {
+
+            1 -> actividadesPorPrioridad.filter {
+                it.tipo == TipoActividad.TAREA
+            }
+
+            2 -> actividadesPorPrioridad.filter {
+                it.tipo == TipoActividad.EVENTO
+            }
+
+            else -> actividadesPorPrioridad
+        }
+
+        // Buscar actividades por título
+        val textoBuscado = binding.buscarTitulo.text.toString().trim()
+
+        val actividadesFiltradas = actividadesPorTipo.filter {
+            it.titulo.contains(textoBuscado, ignoreCase = true)
+        }
+
+        adaptador.actualizarLista(actividadesFiltradas)
+
+        if (actividadesFiltradas.isEmpty()) {
+            binding.statusText.visibility = View.VISIBLE
+            binding.statusText.text =
+                if (actividadesGuardadas.isEmpty())
+                    "Todavía no hay actividades guardadas."
+                else
+                    "No hay actividades con los filtros seleccionados."
+        } else {
+            binding.statusText.visibility = View.GONE
+        }
     }
-}
 
 private fun mostrarDetalle(
     actividad: Actividad,
