@@ -312,7 +312,15 @@ class NuevaTareaActividad : AppCompatActivity() {
                 repositorio.guardar(nuevaActividad) { resultado ->
                     runOnUiThread {
                         resultado
-                            .onSuccess {
+                            .onSuccess { idGuardado ->
+
+                                val actividadGuardada = nuevaActividad.copy(
+                                    id = idGuardado
+                                )
+
+                                ProgramadorRecordatorios(applicationContext)
+                                    .programar(actividadGuardada)
+
                                 setResult(RESULT_OK)
                                 finish()
                             }
@@ -357,6 +365,10 @@ class NuevaTareaActividad : AppCompatActivity() {
                     runOnUiThread {
                         resultado
                             .onSuccess {
+
+                                ProgramadorRecordatorios(applicationContext)
+                                    .programar(actividadActualizada)
+
                                 setResult(RESULT_OK)
                                 finish()
                             }

@@ -22,6 +22,12 @@ import com.santi.organizame.modelo.Prioridad
 import android.text.Editable
 import android.text.TextWatcher
 import com.santi.organizame.modelo.Categoria
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.Manifest
+import android.os.Build
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -52,6 +58,8 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        crearCanalRecordatorios()
+        solicitarPermisoNotificaciones()
 
         actividadRepository = ActividadRepository(
             OrganizaMeDatabase.obtener(applicationContext).actividadDao()
@@ -393,6 +401,48 @@ override fun onResume() {
             }
         }
     }
+
+    private fun crearCanalRecordatorios() {
+
+        val canal = NotificationChannel(
+            "recordatorios",
+            "Recordatorios de actividades",
+            NotificationManager.IMPORTANCE_DEFAULT
+        )
+
+        val administrador = getSystemService(NotificationManager::class.java)
+
+        administrador.createNotificationChannel(canal)
+    }
+
+    private fun solicitarPermisoNotificaciones() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+            val permisoConcedido = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!permisoConcedido) {
+                permisoNotificaciones.launch(
+                    Manifest.permission.POST_NOTIFICATIONS
+                )
+            }
+        }
+    }
+
+    private val permisoNotificaciones =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { permitido ->
+
+            if (!permitido) {
+                Toast.makeText(
+                    this,
+                    "Las notificaciones están desactivadas",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+        }
 
     private fun aplicarFiltro() {
 
