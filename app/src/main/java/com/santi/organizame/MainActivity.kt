@@ -29,6 +29,8 @@ import android.os.Build
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 import com.santi.organizame.parser.ParserActividad
+import com.santi.organizame.filtros.CriteriosFiltroActividad
+import com.santi.organizame.filtros.FiltroActividades
 import java.time.ZonedDateTime
 
 import androidx.appcompat.app.AlertDialog
@@ -557,82 +559,41 @@ override fun onResume() {
         }
 
     private fun aplicarFiltro() {
-
         val posicionCategoria = binding.filtroCategoria.selectedItemPosition
         val posicionEstado = binding.filtroEstado.selectedItemPosition
         val posicionPrioridad = binding.filtroPrioridad.selectedItemPosition
         val posicionTipo = binding.filtroTipo.selectedItemPosition
 
-        // Filtrar por categoría
-        val actividadesPorCategoria = when (posicionCategoria) {
-
-            -1, 0 -> actividadesGuardadas
-
-            1 -> actividadesGuardadas.filter {
-                it.categoriaId == null
+        val criterios = CriteriosFiltroActividad(
+            texto = binding.buscarTitulo.text.toString(),
+            categoriaId = if (posicionCategoria >= 2) {
+                categoriasFiltro.getOrNull(posicionCategoria - 2)?.id
+            } else {
+                null
+            },
+            soloSinCategoria = posicionCategoria == 1,
+            estado = when (posicionEstado) {
+                1 -> EstadoTarea.PENDIENTE
+                2 -> EstadoTarea.COMPLETADA
+                else -> null
+            },
+            prioridad = when (posicionPrioridad) {
+                1 -> Prioridad.ALTA
+                2 -> Prioridad.MEDIA
+                3 -> Prioridad.BAJA
+                else -> null
+            },
+            tipo = when (posicionTipo) {
+                1 -> TipoActividad.TAREA
+                2 -> TipoActividad.EVENTO
+                else -> null
             }
+        )
 
-            else -> {
-                val categoria = categoriasFiltro.getOrNull(posicionCategoria - 2)
-
-                actividadesGuardadas.filter {
-                    it.categoriaId == categoria?.id
-                }
-            }
-        }
-
-        // Filtrar por estado
-        val actividadesPorEstado = when (posicionEstado) {
-
-            1 -> actividadesPorCategoria.filter {
-                it.estadoTarea == EstadoTarea.PENDIENTE
-            }
-
-            2 -> actividadesPorCategoria.filter {
-                it.estadoTarea == EstadoTarea.COMPLETADA
-            }
-
-            else -> actividadesPorCategoria
-        }
-
-        // Filtrar por prioridad
-        val actividadesPorPrioridad = when (posicionPrioridad) {
-
-            1 -> actividadesPorEstado.filter {
-                it.prioridad == Prioridad.ALTA
-            }
-
-            2 -> actividadesPorEstado.filter {
-                it.prioridad == Prioridad.MEDIA
-            }
-
-            3 -> actividadesPorEstado.filter {
-                it.prioridad == Prioridad.BAJA
-            }
-
-            else -> actividadesPorEstado
-        }
-
-        // Filtrar por tipo de actividad
-        val actividadesPorTipo = when (posicionTipo) {
-
-            1 -> actividadesPorPrioridad.filter {
-                it.tipo == TipoActividad.TAREA
-            }
-
-            2 -> actividadesPorPrioridad.filter {
-                it.tipo == TipoActividad.EVENTO
-            }
-
-            else -> actividadesPorPrioridad
-        }
-
-        // Buscar actividades por título
-        val textoBuscado = binding.buscarTitulo.text.toString().trim()
-
-        val actividadesFiltradas = actividadesPorTipo.filter {
-            it.titulo.contains(textoBuscado, ignoreCase = true)
-        }
+        val actividadesFiltradas = FiltroActividades.aplicar(
+            actividadesGuardadas,
+            criterios
+        )
 
         adaptador.actualizarLista(actividadesFiltradas)
 

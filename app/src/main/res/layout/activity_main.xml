@@ -100,7 +100,7 @@
         android:layout_marginStart="24dp"
         android:layout_marginEnd="24dp"
         android:padding="12dp"
-        android:hint="Buscar actividad por título..."
+        android:hint="Buscar por título o descripción..."
         android:inputType="text"
         android:singleLine="true"
         android:drawableStart="@android:drawable/ic_menu_search"
