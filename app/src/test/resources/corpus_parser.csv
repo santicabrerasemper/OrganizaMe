@@ -1,0 +1,31 @@
+id|frase|titulo|tipo|fecha|hora|prioridad|categoriaId
+1|estudiar mañana a las 18|estudiar|TAREA|2026-11-17|18:00|MEDIA|-
+2|reunión el viernes a las 10 prioridad alta|reunión|EVENTO|2026-11-20|10:00|ALTA|-
+3|tarea comprar remedios hoy urgente|comprar remedios|TAREA|2026-11-16|-|ALTA|-
+4|turno dentista 15/10/2027 a las 09:30|dentista|EVENTO|2027-10-15|09:30|MEDIA|-
+5|cita médico 20-11-2026 14:00|médico|EVENTO|2026-11-20|14:00|MEDIA|-
+6|entregar informe trabajo pasado mañana prioridad alta|entregar informe|TAREA|2026-11-18|-|ALTA|3
+7|estudiar álgebra facultad miércoles a las 19|estudiar álgebra|TAREA|2026-11-18|19:00|MEDIA|2
+8|llamar a mamá personal hoy a las 20|llamar a mamá|TAREA|2026-11-16|20:00|MEDIA|1
+9|evento cumpleaños 25/12/2026|cumpleaños|EVENTO|2026-12-25|-|MEDIA|-
+10|tarea pagar servicios 30/11 prioridad media|pagar servicios|TAREA|2026-11-30|-|MEDIA|-
+11|preparar parcial universidad jueves|preparar parcial|TAREA|2026-11-19|-|MEDIA|2
+12|reunión oficina mañana a las 09:00|reunión|EVENTO|2026-11-17|09:00|MEDIA|3
+13|cita banco 18/11/2026 prioridad baja|banco|EVENTO|2026-11-18|-|BAJA|-
+14|turno veterinario sábado a las 11|veterinario|EVENTO|2026-11-21|11:00|MEDIA|-
+15|ordenar casa hoy|ordenar|TAREA|2026-11-16|-|MEDIA|1
+16|evento conferencia 01/12/2026 16:30 prioridad alta|conferencia|EVENTO|2026-12-01|16:30|ALTA|-
+17|tarea leer capítulo domingo|leer capítulo|TAREA|2026-11-22|-|MEDIA|-
+18|comprar regalo pasado mañana|comprar regalo|TAREA|2026-11-18|-|MEDIA|-
+19|reunión martes a las 17|reunión|EVENTO|2026-11-17|17:00|MEDIA|-
+20|tarea renovar licencia 10/01|renovar licencia|TAREA|2027-01-10|-|MEDIA|-
+21|enviar correo laboral mañana a las 08:15|enviar correo|TAREA|2026-11-17|08:15|MEDIA|3
+22|evento cena viernes a las 21:30|cena|EVENTO|2026-11-20|21:30|MEDIA|-
+23|estudiar física estudio jueves prioridad alta|estudiar física|TAREA|2026-11-19|-|ALTA|2
+24|tarea limpiar hogar sábado|limpiar|TAREA|2026-11-21|-|MEDIA|1
+25|cita oftalmólogo 05-12-2026 a las 12|oftalmólogo|EVENTO|2026-12-05|12:00|MEDIA|-
+26|presentar proyecto oficina 30/11/2026 a las 18:45|presentar proyecto|TAREA|2026-11-30|18:45|MEDIA|3
+27|evento recital 22/11/2026 a las 20|recital|EVENTO|2026-11-22|20:00|MEDIA|-
+28|llamar cliente trabajo mañana prioridad alta|llamar cliente|TAREA|2026-11-17|-|ALTA|3
+29|tarea hacer compras hoy prioridad baja|hacer compras|TAREA|2026-11-16|-|BAJA|-
+30|reunión universidad 27/11/2026 10:30|reunión|EVENTO|2026-11-27|10:30|MEDIA|2

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <Button
+            android:id="@+id/btnVolverAyuda"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="← Volver" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Carga rápida en español"
+            android:textColor="@color/primary"
+            android:textSize="28sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Escribí una frase y OrganizaMe completará los campos que pueda reconocer. Siempre podrás revisarlos y corregirlos antes de guardar."
+            android:textColor="@color/on_background"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Ejemplos"
+            android:textColor="@color/on_background"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="• estudiar mañana a las 18\n• reunión el viernes a las 10 prioridad alta\n• tarea comprar remedios hoy urgente\n• turno dentista 15/10/2027 a las 09:30\n• entregar informe trabajo pasado mañana prioridad baja"
+            android:textColor="@color/on_background"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Expresiones reconocidas"
+            android:textColor="@color/on_background"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Fechas: hoy, mañana, pasado mañana, lunes a domingo, dd/MM/aaaa y dd-MM-aaaa.\n\nHoras: HH:mm o ‘a las H’.\n\nPrioridad: prioridad alta, media, baja o urgente.\n\nTipo: tarea, evento, reunión, cita o turno.\n\nCategorías: nombre o palabras clave configuradas en la categoría."
+            android:textColor="@color/on_background"
+            android:textSize="16sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Limitaciones"
+            android:textColor="@color/on_background"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:text="El parser funciona con reglas acotadas y no intenta comprender lenguaje libre. Si encuentra dos fechas u horarios, datos inválidos o expresiones no soportadas, mostrará una advertencia para que los corrijas. Nunca guarda automáticamente."
+            android:textColor="@color/on_background"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+</ScrollView>

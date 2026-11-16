@@ -328,6 +328,10 @@ class MainActivity : AppCompatActivity() {
         interpretarFraseRapida()
     }
 
+    binding.btnAyudaParser.setOnClickListener {
+        startActivity(Intent(this, AyudaParserActividad::class.java))
+    }
+
     binding.btnCategorias.setOnClickListener {
         val intent = Intent(this, CategoriasActividad::class.java)
         startActivity(intent)

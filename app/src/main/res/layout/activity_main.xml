@@ -78,6 +78,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/entradaRapida" />
 
+    <TextView
+        android:id="@+id/btnAyudaParser"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="4dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:text="¿Qué frases puedo escribir?"
+        android:textColor="@color/primary"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/entradaRapida" />
+
     <EditText
         android:id="@+id/buscarTitulo"
         android:layout_width="0dp"
@@ -91,7 +105,7 @@
         android:singleLine="true"
         android:drawableStart="@android:drawable/ic_menu_search"
         android:drawablePadding="8dp"
-        app:layout_constraintTop_toBottomOf="@id/entradaRapida"
+        app:layout_constraintTop_toBottomOf="@id/btnAyudaParser"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 

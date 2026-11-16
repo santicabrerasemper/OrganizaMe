@@ -6,7 +6,15 @@ Su componente diferencial será un parser determinístico de instrucciones simpl
 
 ## Estado
 
-Proyecto base creado para iniciar el desarrollo del MVP.
+El núcleo local del MVP ya incluye:
+
+- CRUD de tareas, eventos y categorías con Room.
+- Agenda, calendario, búsqueda y filtros combinados.
+- Recordatorios locales con notificaciones.
+- Parser determinístico de frases en español con confirmación editable.
+- Corpus reproducible de 30 frases y métricas automatizadas.
+
+La aplicación se encuentra en etapa de integración, pruebas de comportamiento y preparación de la entrega.
 
 ## Tecnologías
 

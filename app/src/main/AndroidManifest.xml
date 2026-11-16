@@ -22,6 +22,9 @@
             android:name=".NuevaTareaActividad"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".AyudaParserActividad"
+            android:exported="false" />
         <receiver
             android:name=".ReceptorRecordatorio"
             android:exported="false" />
