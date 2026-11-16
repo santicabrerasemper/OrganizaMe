@@ -91,6 +91,8 @@ class MainActivity : AppCompatActivity() {
                             runOnUiThread {
                                 resultado
                                     .onSuccess {
+                                        ProgramadorRecordatorios(applicationContext)
+                                            .cancelar(actividad.id)
                                         cargarActividades()
                                     }
                                     .onFailure {
@@ -115,6 +117,7 @@ class MainActivity : AppCompatActivity() {
                         actividad.copy(
                             estadoTarea = EstadoTarea.COMPLETADA,
                             fechaCompletada = Instant.now(),
+                            fechaRecordatorioProgramado = null,
                             fechaModificacion = Instant.now()
                         )
 
@@ -123,6 +126,12 @@ class MainActivity : AppCompatActivity() {
                         actividad.copy(
                             estadoTarea = EstadoTarea.PENDIENTE,
                             fechaCompletada = null,
+                            fechaRecordatorioProgramado =
+                                ProgramadorRecordatorios.calcularMomentoAviso(
+                                    actividad.fecha,
+                                    actividad.hora,
+                                    actividad.recordatorio
+                                )?.takeIf { it.isAfter(Instant.now()) },
                             fechaModificacion = Instant.now()
                         )
                     }
@@ -131,6 +140,12 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         resultado
                             .onSuccess {
+                                val programador = ProgramadorRecordatorios(applicationContext)
+                                if (actividadActualizada.estadoTarea == EstadoTarea.COMPLETADA) {
+                                    programador.cancelar(actividadActualizada.id)
+                                } else {
+                                    programador.programar(actividadActualizada)
+                                }
                                 cargarActividades()
                             }
                             .onFailure {
@@ -145,29 +160,7 @@ class MainActivity : AppCompatActivity() {
             },
 
             alVerDetalle = { actividad ->
-
-                val categoriaId = actividad.categoriaId
-
-                if (categoriaId == null) {
-                    mostrarDetalle(actividad, "Sin categoría")
-                } else {
-                    categoriaRepository.obtenerPorId(categoriaId) { resultado ->
-                        runOnUiThread {
-                            resultado
-                                .onSuccess { categoria ->
-                                    val nombre = categoria?.nombre ?: "Sin categoría"
-                                    mostrarDetalle(actividad, nombre)
-                                }
-                                .onFailure {
-                                    Toast.makeText(
-                                        this,
-                                        "No se pudo consultar la categoría",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                        }
-                    }
-                }
+                mostrarDetalleConCategoria(actividad)
             }
         )
 
@@ -341,6 +334,13 @@ class MainActivity : AppCompatActivity() {
 
 
     cargarActividades()
+    procesarIntentRecordatorio(intent)
+}
+
+override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    procesarIntentRecordatorio(intent)
 }
 
 override fun onResume() {
@@ -405,14 +405,50 @@ override fun onResume() {
     private fun crearCanalRecordatorios() {
 
         val canal = NotificationChannel(
-            "recordatorios",
+            ReceptorRecordatorio.CANAL_ID,
             "Recordatorios de actividades",
             NotificationManager.IMPORTANCE_DEFAULT
-        )
+        ).apply {
+            description = "Avisos de las tareas y eventos de OrganizaMe"
+        }
 
         val administrador = getSystemService(NotificationManager::class.java)
 
         administrador.createNotificationChannel(canal)
+    }
+
+    private fun procesarIntentRecordatorio(intent: Intent?) {
+        val actividadId = intent?.getLongExtra(
+            ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID,
+            -1L
+        ) ?: -1L
+
+        if (actividadId <= 0L) return
+        intent?.removeExtra(ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID)
+
+        actividadRepository.obtenerPorId(actividadId) { resultado ->
+            runOnUiThread {
+                resultado
+                    .onSuccess { actividad ->
+                        if (actividad == null) {
+                            Toast.makeText(
+                                this,
+                                "La actividad ya no existe",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            mostrarDetalleConCategoria(actividad)
+                        }
+                    }
+                    .onFailure {
+                        Toast.makeText(
+                            this,
+                            "No se pudo abrir la actividad",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            }
+        }
     }
 
     private fun solicitarPermisoNotificaciones() {
@@ -535,6 +571,31 @@ override fun onResume() {
             binding.statusText.visibility = View.GONE
         }
     }
+
+private fun mostrarDetalleConCategoria(actividad: Actividad) {
+    val categoriaId = actividad.categoriaId
+
+    if (categoriaId == null) {
+        mostrarDetalle(actividad, "Sin categoría")
+        return
+    }
+
+    categoriaRepository.obtenerPorId(categoriaId) { resultado ->
+        runOnUiThread {
+            resultado
+                .onSuccess { categoria ->
+                    mostrarDetalle(actividad, categoria?.nombre ?: "Sin categoría")
+                }
+                .onFailure {
+                    Toast.makeText(
+                        this,
+                        "No se pudo consultar la categoría",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+        }
+    }
+}
 
 private fun mostrarDetalle(
     actividad: Actividad,

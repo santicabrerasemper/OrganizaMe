@@ -286,6 +286,20 @@ class NuevaTareaActividad : AppCompatActivity() {
                 null
             }
 
+            val momentoRecordatorio = ProgramadorRecordatorios.calcularMomentoAviso(
+                fechaConvertida,
+                horaConvertida,
+                recordatorioSeleccionado
+            )
+
+            if (recordatorioSeleccionado != null &&
+                (momentoRecordatorio == null || !momentoRecordatorio.isAfter(Instant.now()))
+            ) {
+                binding.fechaTarea.error = "El momento del recordatorio ya pasó"
+                binding.horaTarea.error = "Elegí una fecha y hora futuras"
+                return@setOnClickListener
+            }
+
 
             binding.btnGuardarTarea.isEnabled = false
 
@@ -301,6 +315,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                     prioridad = prioridadSeleccionada,
                     categoriaId = categoriaSeleccionada?.id,
                     recordatorio = recordatorioSeleccionado,
+                    fechaRecordatorioProgramado = momentoRecordatorio,
                     estadoTarea =
                         if (tipoSeleccionado == TipoActividad.TAREA) {
                             EstadoTarea.PENDIENTE
@@ -358,6 +373,14 @@ class NuevaTareaActividad : AppCompatActivity() {
                         },
                     fechaCompletada =
                         if (esTarea) actividadOriginal.fechaCompletada else null,
+                    fechaRecordatorioProgramado =
+                        if (esTarea &&
+                            actividadOriginal.estadoTarea == EstadoTarea.COMPLETADA
+                        ) {
+                            null
+                        } else {
+                            momentoRecordatorio
+                        },
                     fechaModificacion = Instant.now()
                 )
 
