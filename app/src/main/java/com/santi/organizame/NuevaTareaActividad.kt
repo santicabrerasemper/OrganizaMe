@@ -16,6 +16,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
 import android.widget.Toast
+import android.view.View
 import java.time.Instant
 import com.santi.organizame.modelo.CategoriaRepository
 import com.santi.organizame.modelo.ActividadRepository
@@ -78,6 +79,7 @@ class NuevaTareaActividad : AppCompatActivity() {
         )
 
         var categorias: List<Categoria?> = listOf(null)
+        val categoriaParserId = intent.getLongExtra(EXTRA_PARSER_CATEGORIA_ID, -1L)
 
         val adaptadorCategorias = ArrayAdapter(
             this,
@@ -124,6 +126,15 @@ class NuevaTareaActividad : AppCompatActivity() {
                             )
                         }
 
+                        if (actividadEditando == null && categoriaParserId >= 0L) {
+                            val posicion = categorias.indexOfFirst {
+                                it?.id == categoriaParserId
+                            }
+                            binding.categoriaTarea.setSelection(
+                                if (posicion >= 0) posicion else 0
+                            )
+                        }
+
                         binding.categoriaTarea.isEnabled = true
                         binding.btnGuardarTarea.isEnabled = true
                     }
@@ -158,6 +169,45 @@ class NuevaTareaActividad : AppCompatActivity() {
         )
 
         binding.recordatorioTarea.adapter = adaptadorRecordatorio
+
+        if (intent.hasExtra(EXTRA_PARSER_TEXTO_ORIGINAL)) {
+            val textoOriginal = intent.getStringExtra(EXTRA_PARSER_TEXTO_ORIGINAL).orEmpty()
+            val advertencias =
+                intent.getStringArrayListExtra(EXTRA_PARSER_ADVERTENCIAS).orEmpty()
+
+            binding.resumenInterpretacion.visibility = View.VISIBLE
+            binding.tituloFormulario.text = "Revisar interpretación"
+            binding.resumenInterpretacion.text = buildString {
+                append("Frase interpretada: “").append(textoOriginal).append("”")
+                append("\n\nRevisá todos los campos antes de guardar.")
+                if (advertencias.isNotEmpty()) {
+                    append("\n\nAdvertencias:")
+                    advertencias.forEach { append("\n• ").append(it) }
+                }
+            }
+
+            binding.tituloTarea.setText(
+                intent.getStringExtra(EXTRA_PARSER_TITULO).orEmpty()
+            )
+
+            intent.getStringExtra(EXTRA_PARSER_TIPO)
+                ?.let { runCatching { TipoActividad.valueOf(it) }.getOrNull() }
+                ?.let { binding.tipoActividad.setSelection(tiposActividad.indexOf(it)) }
+
+            intent.getStringExtra(EXTRA_PARSER_FECHA)
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                ?.let { binding.fechaTarea.setText(it.format(FORMATO_FECHA)) }
+
+            intent.getStringExtra(EXTRA_PARSER_HORA)
+                ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+                ?.let { binding.horaTarea.setText(it.format(FORMATO_HORA)) }
+
+            intent.getStringExtra(EXTRA_PARSER_PRIORIDAD)
+                ?.let { runCatching { Prioridad.valueOf(it) }.getOrNull() }
+                ?.let { binding.prioridadTarea.setSelection(Prioridad.values().indexOf(it)) }
+
+            binding.btnGuardarTarea.text = "Confirmar y guardar"
+        }
 
         val actividadId = intent.getLongExtra("actividadId", -1L)
 
@@ -209,6 +259,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                                 binding.recordatorioTarea.setSelection(posicionRecordatorio)
 
                                 binding.btnGuardarTarea.text = "Guardar cambios"
+                                binding.tituloFormulario.text = "Editar actividad"
                             }
                         }
                         .onFailure {
@@ -430,7 +481,16 @@ class NuevaTareaActividad : AppCompatActivity() {
         }
     }
 
-    private companion object {
+    companion object {
+        const val EXTRA_PARSER_TEXTO_ORIGINAL = "parserTextoOriginal"
+        const val EXTRA_PARSER_TITULO = "parserTitulo"
+        const val EXTRA_PARSER_TIPO = "parserTipo"
+        const val EXTRA_PARSER_FECHA = "parserFecha"
+        const val EXTRA_PARSER_HORA = "parserHora"
+        const val EXTRA_PARSER_PRIORIDAD = "parserPrioridad"
+        const val EXTRA_PARSER_CATEGORIA_ID = "parserCategoriaId"
+        const val EXTRA_PARSER_ADVERTENCIAS = "parserAdvertencias"
+
         val FORMATO_FECHA: DateTimeFormatter = DateTimeFormatter
             .ofPattern("dd/MM/uuuu")
             .withResolverStyle(ResolverStyle.STRICT)

@@ -32,12 +32,23 @@
                 android:text="← Volver" />
 
             <TextView
+                android:id="@+id/tituloFormulario"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Nueva tarea"
                 android:textSize="28sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="24dp" />
+
+            <TextView
+                android:id="@+id/resumenInterpretacion"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="12dp"
+                android:background="#FFF3CD"
+                android:padding="12dp"
+                android:textColor="#5F4500"
+                android:visibility="gone" />
 
             <TextView
                 android:layout_width="wrap_content"

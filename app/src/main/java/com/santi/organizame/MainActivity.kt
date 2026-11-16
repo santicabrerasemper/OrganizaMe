@@ -28,6 +28,8 @@ import android.Manifest
 import android.os.Build
 import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
+import com.santi.organizame.parser.ParserActividad
+import java.time.ZonedDateTime
 
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -322,6 +324,10 @@ class MainActivity : AppCompatActivity() {
         nuevaTareaLauncher.launch(intent)
     }
 
+    binding.btnInterpretar.setOnClickListener {
+        interpretarFraseRapida()
+    }
+
     binding.btnCategorias.setOnClickListener {
         val intent = Intent(this, CategoriasActividad::class.java)
         startActivity(intent)
@@ -347,6 +353,72 @@ override fun onResume() {
     super.onResume()
     cargarCategoriasFiltro()
 }
+
+    private fun interpretarFraseRapida() {
+        val frase = binding.entradaRapida.text.toString().trim()
+        if (frase.isBlank()) {
+            binding.entradaRapida.error = "Ingresá una frase"
+            return
+        }
+
+        binding.btnInterpretar.isEnabled = false
+        categoriaRepository.obtenerTodas { resultado ->
+            runOnUiThread {
+                binding.btnInterpretar.isEnabled = true
+                resultado
+                    .onSuccess { categorias ->
+                        val interpretacion = ParserActividad().interpretar(
+                            frase,
+                            ZonedDateTime.now(),
+                            categorias
+                        )
+
+                        val intent = Intent(this, NuevaTareaActividad::class.java).apply {
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_TEXTO_ORIGINAL,
+                                interpretacion.textoOriginal
+                            )
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_TITULO,
+                                interpretacion.titulo.valor.orEmpty()
+                            )
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_TIPO,
+                                interpretacion.tipo.valor?.name
+                            )
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_FECHA,
+                                interpretacion.fecha.valor?.toString()
+                            )
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_HORA,
+                                interpretacion.hora.valor?.toString()
+                            )
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_PRIORIDAD,
+                                interpretacion.prioridad.valor?.name
+                            )
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_CATEGORIA_ID,
+                                interpretacion.categoriaId.valor ?: -1L
+                            )
+                            putStringArrayListExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_ADVERTENCIAS,
+                                ArrayList(interpretacion.advertencias)
+                            )
+                        }
+                        nuevaTareaLauncher.launch(intent)
+                    }
+                    .onFailure {
+                        Toast.makeText(
+                            this,
+                            "No se pudieron cargar las categorías para interpretar la frase",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+            }
+        }
+    }
 
     private fun cargarCategoriasFiltro() {
 

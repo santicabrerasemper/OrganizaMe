@@ -96,6 +96,9 @@ class CategoriasActividad : AppCompatActivity() {
         val campoNombre = EditText(this)
         campoNombre.hint = "Nombre de la categoría"
 
+        val campoPalabrasClave = EditText(this)
+        campoPalabrasClave.hint = "Palabras clave separadas por comas"
+
         val colores = listOf(
             "Verde" to "#4CAF50",
             "Azul" to "#2196F3",
@@ -128,6 +131,7 @@ class CategoriasActividad : AppCompatActivity() {
             setPadding(margen, margen, margen, margen)
 
             addView(campoNombre)
+            addView(campoPalabrasClave)
             addView(botonColor)
         }
 
@@ -149,7 +153,10 @@ class CategoriasActividad : AppCompatActivity() {
                 } else {
                     val nuevaCategoria = Categoria(
                         nombre = nombre,
-                        color = colorSeleccionado
+                        color = colorSeleccionado,
+                        palabrasClave = convertirPalabrasClave(
+                            campoPalabrasClave.text.toString()
+                        )
                     )
 
                     botonGuardar.isEnabled = false
@@ -184,6 +191,10 @@ class CategoriasActividad : AppCompatActivity() {
         val campoNombre = EditText(this)
         campoNombre.setText(categoria.nombre)
         campoNombre.setSelection(campoNombre.text.length)
+
+        val campoPalabrasClave = EditText(this)
+        campoPalabrasClave.hint = "Palabras clave separadas por comas"
+        campoPalabrasClave.setText(categoria.palabrasClave.joinToString(", "))
         val colores = listOf(
             "Verde" to "#4CAF50",
             "Azul" to "#2196F3",
@@ -222,6 +233,7 @@ class CategoriasActividad : AppCompatActivity() {
             setPadding(margen, margen, margen, margen)
 
             addView(campoNombre)
+            addView(campoPalabrasClave)
             addView(botonColor)
         }
 
@@ -244,7 +256,10 @@ class CategoriasActividad : AppCompatActivity() {
 
                     val categoriaActualizada = categoria.copy(
                         nombre = nuevoNombre,
-                        color = colorSeleccionado
+                        color = colorSeleccionado,
+                        palabrasClave = convertirPalabrasClave(
+                            campoPalabrasClave.text.toString()
+                        )
                     )
 
                     botonGuardar.isEnabled = false
@@ -272,6 +287,13 @@ class CategoriasActividad : AppCompatActivity() {
 
         dialogo.show()
     }
+
+    private fun convertirPalabrasClave(texto: String): List<String> =
+        texto.split(',')
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .distinctBy { it.lowercase() }
+
     private fun eliminarCategoria(categoria: Categoria) {
 
         AlertDialog.Builder(this)
