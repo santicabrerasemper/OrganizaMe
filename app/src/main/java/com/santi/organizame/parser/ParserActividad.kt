@@ -9,6 +9,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZonedDateTime
 import java.util.Locale
+import com.santi.organizame.modelo.AnticipacionRecordatorio
 
 class ParserActividad {
 
@@ -41,6 +42,7 @@ class ParserActividad {
         }
 
         val hora = extraerHora(normalizado, consumido, advertencias)
+
         val fecha = extraerFecha(
             normalizado,
             ahora,
@@ -48,8 +50,11 @@ class ParserActividad {
             consumido,
             advertencias
         )
+
         val tipo = extraerTipo(normalizado, consumido, advertencias)
+
         val prioridad = extraerPrioridad(normalizado, consumido, advertencias)
+
         val categoria = extraerCategoria(
             normalizado,
             categorias,
@@ -57,21 +62,38 @@ class ParserActividad {
             advertencias
         )
 
-        if (hora.valor != null && fecha.valor == null &&
+        // Extraemos los nuevos campos
+        val recordatorio = extraerRecordatorio(
+            normalizado,
+            consumido,
+            advertencias
+        )
+
+        val descripcion = extraerDescripcion(
+            original,
+            normalizado,
+            consumido
+        )
+
+        if (hora.valor != null &&
+            fecha.valor == null &&
             fecha.estado == EstadoCampoParser.FALTANTE
         ) {
             advertencias += "Se detectó una hora, pero falta indicar la fecha."
         }
-        if (tipo.valor == TipoActividad.EVENTO && fecha.valor == null &&
+
+        if (tipo.valor == TipoActividad.EVENTO &&
+            fecha.valor == null &&
             fecha.estado == EstadoCampoParser.FALTANTE
         ) {
             advertencias += "Los eventos necesitan una fecha."
         }
 
         val textoRestante = construirTextoRestante(original, consumido)
+
         val titulo: CampoParser<String> = if (textoRestante.isBlank()) {
             advertencias += "No se pudo construir un título."
-            CampoParser<String>(null, EstadoCampoParser.FALTANTE)
+            CampoParser(null, EstadoCampoParser.FALTANTE)
         } else {
             CampoParser(textoRestante, EstadoCampoParser.EXTRAIDO)
         }
@@ -85,7 +107,9 @@ class ParserActividad {
             prioridad = prioridad,
             categoriaId = categoria,
             advertencias = advertencias.distinct(),
-            textoRestante = textoRestante
+            textoRestante = textoRestante,
+            descripcion = descripcion,
+            recordatorio = recordatorio
         )
     }
 
@@ -292,6 +316,12 @@ class ParserActividad {
 
         rangos.forEach { consumir(it, consumido) }
 
+        if (encontradas.isNotEmpty()) {
+            Regex("""\bcategoria\s+""").findAll(texto).forEach {
+                consumir(it.range, consumido)
+            }
+        }
+
         return when {
             encontradas.size > 1 -> {
                 advertencias += "La frase coincide con más de una categoría."
@@ -302,7 +332,88 @@ class ParserActividad {
             else -> CampoParser(null, EstadoCampoParser.FALTANTE)
         }
     }
+    private fun extraerRecordatorio(
+        texto: String,
+        consumido: BooleanArray,
+        advertencias: MutableList<String>
+    ): CampoParser<AnticipacionRecordatorio> {
 
+        val patron = Regex(
+            """\brecordatorio\s+(a\s+la\s+hora|10\s+minutos?\s+antes|30\s+minutos?\s+antes|1\s+hora\s+antes|1\s+dia\s+antes)\b"""
+        )
+
+        val coincidencias = patron.findAll(texto).toList()
+
+        if (coincidencias.isEmpty()) {
+            if (Regex("""\brecordatorio\b""").containsMatchIn(texto)) {
+                advertencias += "No se reconoció el formato del recordatorio."
+                return CampoParser(null, EstadoCampoParser.INVALIDO)
+            }
+
+            return CampoParser(null, EstadoCampoParser.FALTANTE)
+        }
+
+        coincidencias.forEach {
+            consumir(it.range, consumido)
+        }
+
+        val valores = coincidencias.map { coincidencia ->
+            when (
+                coincidencia.groupValues[1]
+                    .replace(Regex("""\s+"""), " ")
+            ) {
+                "a la hora" ->
+                    AnticipacionRecordatorio.A_LA_HORA
+
+                "10 minutos antes", "10 minuto antes" ->
+                    AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES
+
+                "30 minutos antes", "30 minuto antes" ->
+                    AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES
+
+                "1 hora antes" ->
+                    AnticipacionRecordatorio.UNA_HORA_ANTES
+
+                else ->
+                    AnticipacionRecordatorio.UN_DIA_ANTES
+            }
+        }.distinct()
+
+        return if (valores.size > 1) {
+            advertencias += "Se encontraron recordatorios diferentes."
+            CampoParser(null, EstadoCampoParser.AMBIGUO)
+        } else {
+            CampoParser(valores.first(), EstadoCampoParser.EXTRAIDO)
+        }
+    }
+
+    private fun extraerDescripcion(
+        original: String,
+        texto: String,
+        consumido: BooleanArray
+    ): CampoParser<String> {
+
+        val patron = Regex(
+            """\bdescripcion\s+(.+?)(?=\s+(?:recordatorio|prioridad|categoria)\b|$)"""
+        )
+
+        val coincidencia = patron.find(texto)
+            ?: return CampoParser(null, EstadoCampoParser.FALTANTE)
+
+        val rango = coincidencia.groups[1]!!.range
+
+        val descripcion = original.substring(
+            rango.first,
+            rango.last + 1
+        ).trim()
+
+        consumir(coincidencia.range, consumido)
+
+        return CampoParser(
+            descripcion,
+            EstadoCampoParser.EXTRAIDO
+        )
+    }
     private fun construirTextoRestante(original: String, consumido: BooleanArray): String {
         val texto = buildString {
             original.forEachIndexed { indice, caracter ->

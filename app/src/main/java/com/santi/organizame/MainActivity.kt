@@ -412,6 +412,16 @@ override fun onResume() {
                                 NuevaTareaActividad.EXTRA_PARSER_ADVERTENCIAS,
                                 ArrayList(interpretacion.advertencias)
                             )
+
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_DESCRIPCION,
+                                interpretacion.descripcion.valor
+                            )
+
+                            putExtra(
+                                NuevaTareaActividad.EXTRA_PARSER_RECORDATORIO,
+                                interpretacion.recordatorio.valor?.name
+                            )
                         }
                         nuevaTareaLauncher.launch(intent)
                     }

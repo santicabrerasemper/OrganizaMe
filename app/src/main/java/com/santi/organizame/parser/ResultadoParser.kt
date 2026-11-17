@@ -4,6 +4,7 @@ import com.santi.organizame.modelo.Prioridad
 import com.santi.organizame.modelo.TipoActividad
 import java.time.LocalDate
 import java.time.LocalTime
+import com.santi.organizame.modelo.AnticipacionRecordatorio
 
 enum class EstadoCampoParser {
     EXTRAIDO,
@@ -27,7 +28,11 @@ data class ResultadoParser(
     val prioridad: CampoParser<Prioridad>,
     val categoriaId: CampoParser<Long>,
     val advertencias: List<String>,
-    val textoRestante: String
+    val textoRestante: String,
+    val descripcion: CampoParser<String> =
+        CampoParser(null, EstadoCampoParser.FALTANTE),
+    val recordatorio: CampoParser<AnticipacionRecordatorio> =
+        CampoParser(null, EstadoCampoParser.FALTANTE)
 ) {
     val requiereRevision: Boolean
         get() = advertencias.isNotEmpty() || listOf(
@@ -36,8 +41,11 @@ data class ResultadoParser(
             fecha.estado,
             hora.estado,
             prioridad.estado,
-            categoriaId.estado
+            categoriaId.estado,
+            descripcion.estado,
+            recordatorio.estado
         ).any {
-            it == EstadoCampoParser.AMBIGUO || it == EstadoCampoParser.INVALIDO
+            it == EstadoCampoParser.AMBIGUO ||
+                    it == EstadoCampoParser.INVALIDO
         }
 }

@@ -189,6 +189,27 @@ class NuevaTareaActividad : AppCompatActivity() {
             binding.tituloTarea.setText(
                 intent.getStringExtra(EXTRA_PARSER_TITULO).orEmpty()
             )
+            binding.descripcionTarea.setText(
+                intent.getStringExtra(EXTRA_PARSER_DESCRIPCION).orEmpty()
+            )
+
+            intent.getStringExtra(EXTRA_PARSER_RECORDATORIO)
+                ?.let {
+                    runCatching {
+                        AnticipacionRecordatorio.valueOf(it)
+                    }.getOrNull()
+                }
+                ?.let { recordatorio ->
+                    val posicion = when (recordatorio) {
+                        AnticipacionRecordatorio.A_LA_HORA -> 1
+                        AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> 2
+                        AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> 3
+                        AnticipacionRecordatorio.UNA_HORA_ANTES -> 4
+                        AnticipacionRecordatorio.UN_DIA_ANTES -> 5
+                    }
+
+                    binding.recordatorioTarea.setSelection(posicion)
+                }
 
             intent.getStringExtra(EXTRA_PARSER_TIPO)
                 ?.let { runCatching { TipoActividad.valueOf(it) }.getOrNull() }
@@ -490,6 +511,9 @@ class NuevaTareaActividad : AppCompatActivity() {
         const val EXTRA_PARSER_PRIORIDAD = "parserPrioridad"
         const val EXTRA_PARSER_CATEGORIA_ID = "parserCategoriaId"
         const val EXTRA_PARSER_ADVERTENCIAS = "parserAdvertencias"
+
+        const val EXTRA_PARSER_DESCRIPCION = "parserDescripcion"
+        const val EXTRA_PARSER_RECORDATORIO = "parserRecordatorio"
 
         val FORMATO_FECHA: DateTimeFormatter = DateTimeFormatter
             .ofPattern("dd/MM/uuuu")
