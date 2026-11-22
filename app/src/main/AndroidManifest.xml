@@ -45,6 +45,13 @@
             android:name=".CalendarioActividad"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".HoyActividad"
+            android:exported="false" />
+
+        <activity
+            android:name=".ListaActividadesActividad"
+            android:exported="false" />
     </application>
 
 </manifest>

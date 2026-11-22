@@ -1,0 +1,258 @@
+
+
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pantallaListaActividades"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background"
+    android:paddingStart="20dp"
+    android:paddingTop="16dp"
+    android:paddingEnd="20dp"
+    android:paddingBottom="16dp">
+
+    <!-- Botón volver -->
+
+    <Button
+        android:id="@+id/btnVolverLista"
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:text="← Volver"
+        android:textSize="15sp"
+        android:textAllCaps="false" />
+
+    <!-- Título -->
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:text="Tareas y eventos"
+        android:textColor="@color/primary"
+        android:textSize="27sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="14dp"
+        android:text="Todas tus actividades organizadas"
+        android:textColor="@color/on_background"
+        android:textSize="15sp" />
+
+    <!-- Contenido desplazable -->
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
+
+            <!-- Buscador -->
+
+            <EditText
+                android:id="@+id/buscarTitulo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="56dp"
+                android:layout_marginTop="8dp"
+                android:hint="Buscar por título o descripción..."
+                android:textSize="16sp"
+                android:inputType="text"
+                android:singleLine="true"
+                android:drawableStart="@android:drawable/ic_menu_search"
+                android:drawablePadding="8dp"
+                android:padding="12dp" />
+
+            <!-- Filtro categoría -->
+
+            <Spinner
+                android:id="@+id/filtroCategoria"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginTop="10dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+
+            <!-- Filtro estado -->
+
+            <Spinner
+                android:id="@+id/filtroEstado"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+
+            <!-- Filtro prioridad -->
+
+            <Spinner
+                android:id="@+id/filtroPrioridad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+
+            <!-- Filtro tipo -->
+
+            <Spinner
+                android:id="@+id/filtroTipo"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:layout_marginTop="6dp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+
+            <!-- Mostrar todas -->
+
+            <Button
+                android:id="@+id/btnMostrarTodas"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="18dp"
+                android:text="Mostrar todas"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+
+            <!-- Pendientes y próximas -->
+
+            <Button
+                android:id="@+id/btnPendientes"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Pendientes y próximas"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/textoPendientes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="Acá aparecerán las tareas pendientes."
+                android:textSize="15sp"
+                android:textColor="@color/on_background"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listaPendientes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:visibility="gone"
+                android:padding="8dp" />
+
+            <!-- Vencidas -->
+
+            <Button
+                android:id="@+id/btnVencidas"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:text="Vencidas"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/textoVencidas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="Acá aparecerán las tareas vencidas."
+                android:textSize="15sp"
+                android:textColor="@color/on_background"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listaVencidas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:padding="8dp"
+                android:visibility="gone" />
+
+            <!-- Completadas -->
+
+            <Button
+                android:id="@+id/btnCompletadas"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:text="Completadas"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/textoCompletadas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="Acá aparecerán las tareas completadas."
+                android:textSize="15sp"
+                android:textColor="@color/on_background"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listaCompletadas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:padding="8dp"
+                android:visibility="gone" />
+
+            <!-- Eventos -->
+
+            <Button
+                android:id="@+id/btnEventos"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:text="Eventos"
+                android:textSize="16sp"
+                android:textAllCaps="false" />
+
+            <TextView
+                android:id="@+id/textoEventos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="16dp"
+                android:text="Acá aparecerán los eventos."
+                android:textSize="15sp"
+                android:textColor="@color/on_background"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listaEventos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:padding="8dp"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>

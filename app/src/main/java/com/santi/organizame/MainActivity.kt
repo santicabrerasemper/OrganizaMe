@@ -1,413 +1,186 @@
+
 package com.santi.organizame
 
+import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.santi.organizame.databinding.ActivityMainBinding
 import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.ActividadRepository
-import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.AnticipacionRecordatorio
 import com.santi.organizame.modelo.CategoriaRepository
-import java.time.format.DateTimeFormatter
-import android.view.View
-import android.widget.Toast
-import com.santi.organizame.modelo.EstadoTarea
-import java.time.Instant
+import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.TipoActividad
-import android.widget.ArrayAdapter
-import android.widget.AdapterView
-import com.santi.organizame.modelo.Prioridad
-import android.text.Editable
-import android.text.TextWatcher
-import com.santi.organizame.modelo.Categoria
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.Manifest
-import android.os.Build
-import android.content.pm.PackageManager
-import androidx.core.content.ContextCompat
 import com.santi.organizame.parser.ParserActividad
-import com.santi.organizame.filtros.CriteriosFiltroActividad
-import com.santi.organizame.filtros.FiltroActividades
 import java.time.ZonedDateTime
-
-import androidx.appcompat.app.AlertDialog
-import androidx.recyclerview.widget.LinearLayoutManager
+import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var actividadRepository: ActividadRepository
-
-    private var actividadesGuardadas: List<Actividad> = emptyList()
-    private var categoriasFiltro: List<Categoria> = emptyList()
-
     private lateinit var categoriaRepository: CategoriaRepository
 
-    private lateinit var adaptador: AdaptadorTarjetasActividad
-
+    // Abrir el formulario de tareas
     private val nuevaTareaLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { resultado ->
-            if (resultado.resultCode == RESULT_OK) {
-                cargarActividades()
-            }
-        }
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-
-
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        crearCanalRecordatorios()
-        solicitarPermisoNotificaciones()
 
+        // Repositorios
         actividadRepository = ActividadRepository(
             OrganizaMeDatabase.obtener(applicationContext).actividadDao()
         )
+
         categoriaRepository = CategoriaRepository(
             OrganizaMeDatabase.obtener(applicationContext).categoriaDao()
         )
-        adaptador = AdaptadorTarjetasActividad(
-            actividades = emptyList(),
 
-            alEditar = { actividad ->
-                val intent = Intent(this, NuevaTareaActividad::class.java)
-                intent.putExtra("actividadId", actividad.id)
-                nuevaTareaLauncher.launch(intent)
+        // Configurar notificaciones
+        crearCanalRecordatorios()
+        solicitarPermisoNotificaciones()
 
-
-
-            },
-
-
-            alEliminar = { actividad ->
-
-                AlertDialog.Builder(this)
-                    .setTitle("Eliminar actividad")
-                    .setMessage("¿Seguro que querés eliminar \"${actividad.titulo}\"?")
-                    .setPositiveButton("Sí") { _, _ ->
-
-                        actividadRepository.eliminar(actividad) { resultado ->
-                            runOnUiThread {
-                                resultado
-                                    .onSuccess {
-                                        ProgramadorRecordatorios(applicationContext)
-                                            .cancelar(actividad.id)
-                                        cargarActividades()
-                                    }
-                                    .onFailure {
-                                        Toast.makeText(
-                                            this,
-                                            "No se pudo eliminar la actividad",
-                                            Toast.LENGTH_LONG
-                                        ).show()
-                                    }
-                            }
-                        }
-                    }
-                    .setNegativeButton("No", null)
-                    .show()
-            },
-
-            alCambiarEstado = { actividad ->
-
-                val actividadActualizada =
-                    if (actividad.estadoTarea == EstadoTarea.PENDIENTE) {
-
-                        actividad.copy(
-                            estadoTarea = EstadoTarea.COMPLETADA,
-                            fechaCompletada = Instant.now(),
-                            fechaRecordatorioProgramado = null,
-                            fechaModificacion = Instant.now()
-                        )
-
-                    } else {
-
-                        actividad.copy(
-                            estadoTarea = EstadoTarea.PENDIENTE,
-                            fechaCompletada = null,
-                            fechaRecordatorioProgramado =
-                                ProgramadorRecordatorios.calcularMomentoAviso(
-                                    actividad.fecha,
-                                    actividad.hora,
-                                    actividad.recordatorio
-                                )?.takeIf { it.isAfter(Instant.now()) },
-                            fechaModificacion = Instant.now()
-                        )
-                    }
-
-                actividadRepository.actualizar(actividadActualizada) { resultado ->
-                    runOnUiThread {
-                        resultado
-                            .onSuccess {
-                                val programador = ProgramadorRecordatorios(applicationContext)
-                                if (actividadActualizada.estadoTarea == EstadoTarea.COMPLETADA) {
-                                    programador.cancelar(actividadActualizada.id)
-                                } else {
-                                    programador.programar(actividadActualizada)
-                                }
-                                cargarActividades()
-                            }
-                            .onFailure {
-                                Toast.makeText(
-                                    this,
-                                    "No se pudo cambiar el estado de la tarea",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                    }
-                }
-            },
-
-            alVerDetalle = { actividad ->
-                mostrarDetalleConCategoria(actividad)
-            }
-        )
-
-        binding.listaActividades.layoutManager = LinearLayoutManager(this)
-        binding.listaActividades.adapter = adaptador
-
-        binding.filtroCategoria.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    aplicarFiltro()
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-            }
-
-        val opcionesEstado = listOf(
-            "Todos los estados",
-            "Pendientes",
-            "Completadas"
-        )
-
-        val adaptadorEstado = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            opcionesEstado
-        )
-
-        adaptadorEstado.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-
-        binding.filtroEstado.adapter = adaptadorEstado
-
-        binding.filtroEstado.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    aplicarFiltro()
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-            }
-
-        val opcionesPrioridad = listOf(
-            "Todas las prioridades",
-            "Alta",
-            "Media",
-            "Baja"
-        )
-
-        val adaptadorPrioridad = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            opcionesPrioridad
-        )
-
-        adaptadorPrioridad.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-
-        binding.filtroPrioridad.adapter = adaptadorPrioridad
-
-        binding.filtroPrioridad.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    aplicarFiltro()
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-            }
-
-        val opcionesTipo = listOf(
-            "Todos los tipos",
-            "Tareas",
-            "Eventos"
-        )
-
-        val adaptadorTipo = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            opcionesTipo
-        )
-
-        adaptadorTipo.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-
-        binding.filtroTipo.adapter = adaptadorTipo
-
-        binding.filtroTipo.onItemSelectedListener =
-            object : AdapterView.OnItemSelectedListener {
-
-                override fun onItemSelected(
-                    parent: AdapterView<*>?,
-                    view: View?,
-                    position: Int,
-                    id: Long
-                ) {
-                    aplicarFiltro()
-                }
-
-                override fun onNothingSelected(parent: AdapterView<*>?) {}
-            }
-
-        binding.buscarTitulo.addTextChangedListener(object : TextWatcher {
-
-            override fun afterTextChanged(texto: Editable?) {
-                aplicarFiltro()
-            }
-
-            override fun beforeTextChanged(
-                s: CharSequence?,
-                start: Int,
-                count: Int,
-                after: Int
-            ) {}
-
-            override fun onTextChanged(
-                s: CharSequence?,
-                start: Int,
-                before: Int,
-                count: Int
-            ) {}
-        })
-
-
-
-        binding.btnMostrarTodas.setOnClickListener {
-
-            binding.filtroCategoria.setSelection(0)
-            binding.filtroEstado.setSelection(0)
-            binding.filtroPrioridad.setSelection(0)
-            binding.filtroTipo.setSelection(0)
-            binding.buscarTitulo.text.clear()
-
-            aplicarFiltro()
+        // Botón Hoy
+        binding.btnHoy.setOnClickListener {
+            startActivity(
+                Intent(this, HoyActividad::class.java)
+            )
         }
 
+        // Botón Ver tareas y eventos
+        binding.btnVerActividades.setOnClickListener {
+            startActivity(
+                Intent(this, ListaActividadesActividad::class.java)
+            )
+        }
 
-    binding.btnNuevaTarea.setOnClickListener {
-        val intent = Intent(this, NuevaTareaActividad::class.java)
-        nuevaTareaLauncher.launch(intent)
+        // Botón Nueva tarea
+        binding.btnNuevaTarea.setOnClickListener {
+            val intent = Intent(
+                this,
+                NuevaTareaActividad::class.java
+            )
+            nuevaTareaLauncher.launch(intent)
+        }
+
+        // Botón Interpretar frase
+        binding.btnInterpretar.setOnClickListener {
+            interpretarFraseRapida()
+        }
+
+        // Botón Ayuda del intérprete
+        binding.btnAyudaParser.setOnClickListener {
+            startActivity(
+                Intent(this, AyudaParserActividad::class.java)
+            )
+        }
+
+        // Botón Categorías
+        binding.btnCategorias.setOnClickListener {
+            startActivity(
+                Intent(this, CategoriasActividad::class.java)
+            )
+        }
+
+        // Botón Calendario
+        binding.btnCalendario.setOnClickListener {
+            startActivity(
+                Intent(this, CalendarioActividad::class.java)
+            )
+        }
+
+        // Abrir detalles si llegó desde un recordatorio
+        procesarIntentRecordatorio(intent)
     }
 
-    binding.btnInterpretar.setOnClickListener {
-        interpretarFraseRapida()
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        procesarIntentRecordatorio(intent)
     }
 
-    binding.btnAyudaParser.setOnClickListener {
-        startActivity(Intent(this, AyudaParserActividad::class.java))
-    }
-
-    binding.btnCategorias.setOnClickListener {
-        val intent = Intent(this, CategoriasActividad::class.java)
-        startActivity(intent)
-    }
-
-    binding.btnCalendario.setOnClickListener {
-        val intent = Intent(this, CalendarioActividad::class.java)
-        startActivity(intent)
-    }
-
-
-    cargarActividades()
-    procesarIntentRecordatorio(intent)
-}
-
-override fun onNewIntent(intent: Intent) {
-    super.onNewIntent(intent)
-    setIntent(intent)
-    procesarIntentRecordatorio(intent)
-}
-
-override fun onResume() {
-    super.onResume()
-    cargarCategoriasFiltro()
-}
-
+    // Interpretar una frase escrita por el usuario
     private fun interpretarFraseRapida() {
+
         val frase = binding.entradaRapida.text.toString().trim()
+
         if (frase.isBlank()) {
             binding.entradaRapida.error = "Ingresá una frase"
             return
         }
 
         binding.btnInterpretar.isEnabled = false
+
         categoriaRepository.obtenerTodas { resultado ->
             runOnUiThread {
+
                 binding.btnInterpretar.isEnabled = true
+
                 resultado
                     .onSuccess { categorias ->
-                        val interpretacion = ParserActividad().interpretar(
-                            frase,
-                            ZonedDateTime.now(),
-                            categorias
-                        )
 
-                        val intent = Intent(this, NuevaTareaActividad::class.java).apply {
+                        val interpretacion =
+                            ParserActividad().interpretar(
+                                frase,
+                                ZonedDateTime.now(),
+                                categorias
+                            )
+
+                        val intent = Intent(
+                            this,
+                            NuevaTareaActividad::class.java
+                        ).apply {
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_TEXTO_ORIGINAL,
                                 interpretacion.textoOriginal
                             )
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_TITULO,
                                 interpretacion.titulo.valor.orEmpty()
                             )
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_TIPO,
                                 interpretacion.tipo.valor?.name
                             )
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_FECHA,
                                 interpretacion.fecha.valor?.toString()
                             )
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_HORA,
                                 interpretacion.hora.valor?.toString()
                             )
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_PRIORIDAD,
                                 interpretacion.prioridad.valor?.name
                             )
+
                             putExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_CATEGORIA_ID,
                                 interpretacion.categoriaId.valor ?: -1L
                             )
+
                             putStringArrayListExtra(
                                 NuevaTareaActividad.EXTRA_PARSER_ADVERTENCIAS,
                                 ArrayList(interpretacion.advertencias)
@@ -423,8 +196,10 @@ override fun onResume() {
                                 interpretacion.recordatorio.valor?.name
                             )
                         }
+
                         nuevaTareaLauncher.launch(intent)
                     }
+
                     .onFailure {
                         Toast.makeText(
                             this,
@@ -436,60 +211,7 @@ override fun onResume() {
         }
     }
 
-    private fun cargarCategoriasFiltro() {
-
-        categoriaRepository.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado
-                    .onSuccess { categorias ->
-
-                        categoriasFiltro = categorias
-
-                        val opciones = listOf(
-                            "Todas las categorías",
-                            "Sin categoría"
-                        ) + categorias.map { it.nombre }
-
-                        val adaptadorFiltro = ArrayAdapter(
-                            this,
-                            android.R.layout.simple_spinner_item,
-                            opciones
-                        )
-
-                        adaptadorFiltro.setDropDownViewResource(
-                            android.R.layout.simple_spinner_dropdown_item
-                        )
-
-                        binding.filtroCategoria.adapter = adaptadorFiltro
-                    }
-                    .onFailure {
-                        Toast.makeText(
-                            this,
-                            "No se pudieron cargar las categorías",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-            }
-        }
-    }
-
-    private fun cargarActividades() {
-        actividadRepository.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado
-                    .onSuccess { actividades ->
-                        actividadesGuardadas = actividades
-                        aplicarFiltro()
-                    }
-                    .onFailure {
-                        binding.statusText.visibility = View.VISIBLE
-                        binding.statusText.text =
-                            "No se pudieron cargar las tareas."
-                    }
-            }
-        }
-    }
-
+    // Crear el canal de notificaciones
     private fun crearCanalRecordatorios() {
 
         val canal = NotificationChannel(
@@ -497,27 +219,36 @@ override fun onResume() {
             "Recordatorios de actividades",
             NotificationManager.IMPORTANCE_DEFAULT
         ).apply {
-            description = "Avisos de las tareas y eventos de OrganizaMe"
+            description =
+                "Avisos de las tareas y eventos de OrganizaMe"
         }
 
-        val administrador = getSystemService(NotificationManager::class.java)
+        val administrador =
+            getSystemService(NotificationManager::class.java)
 
         administrador.createNotificationChannel(canal)
     }
 
+    // Procesar una notificación recibida
     private fun procesarIntentRecordatorio(intent: Intent?) {
+
         val actividadId = intent?.getLongExtra(
             ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID,
             -1L
         ) ?: -1L
 
         if (actividadId <= 0L) return
-        intent?.removeExtra(ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID)
+
+        intent?.removeExtra(
+            ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID
+        )
 
         actividadRepository.obtenerPorId(actividadId) { resultado ->
             runOnUiThread {
+
                 resultado
                     .onSuccess { actividad ->
+
                         if (actividad == null) {
                             Toast.makeText(
                                 this,
@@ -528,6 +259,7 @@ override fun onResume() {
                             mostrarDetalleConCategoria(actividad)
                         }
                     }
+
                     .onFailure {
                         Toast.makeText(
                             this,
@@ -539,14 +271,16 @@ override fun onResume() {
         }
     }
 
+    // Solicitar permiso para mostrar notificaciones
     private fun solicitarPermisoNotificaciones() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 
-            val permisoConcedido = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
+            val permisoConcedido =
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
 
             if (!permisoConcedido) {
                 permisoNotificaciones.launch(
@@ -557,7 +291,9 @@ override fun onResume() {
     }
 
     private val permisoNotificaciones =
-        registerForActivityResult(ActivityResultContracts.RequestPermission()) { permitido ->
+        registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { permitido ->
 
             if (!permitido) {
                 Toast.makeText(
@@ -568,154 +304,131 @@ override fun onResume() {
             }
         }
 
-    private fun aplicarFiltro() {
-        val posicionCategoria = binding.filtroCategoria.selectedItemPosition
-        val posicionEstado = binding.filtroEstado.selectedItemPosition
-        val posicionPrioridad = binding.filtroPrioridad.selectedItemPosition
-        val posicionTipo = binding.filtroTipo.selectedItemPosition
+    // Consultar la categoría de una actividad
+    private fun mostrarDetalleConCategoria(actividad: Actividad) {
 
-        val criterios = CriteriosFiltroActividad(
-            texto = binding.buscarTitulo.text.toString(),
-            categoriaId = if (posicionCategoria >= 2) {
-                categoriasFiltro.getOrNull(posicionCategoria - 2)?.id
-            } else {
-                null
-            },
-            soloSinCategoria = posicionCategoria == 1,
-            estado = when (posicionEstado) {
-                1 -> EstadoTarea.PENDIENTE
-                2 -> EstadoTarea.COMPLETADA
-                else -> null
-            },
-            prioridad = when (posicionPrioridad) {
-                1 -> Prioridad.ALTA
-                2 -> Prioridad.MEDIA
-                3 -> Prioridad.BAJA
-                else -> null
-            },
-            tipo = when (posicionTipo) {
-                1 -> TipoActividad.TAREA
-                2 -> TipoActividad.EVENTO
-                else -> null
+        val categoriaId = actividad.categoriaId
+
+        if (categoriaId == null) {
+            mostrarDetalle(actividad, "Sin categoría")
+            return
+        }
+
+        categoriaRepository.obtenerPorId(categoriaId) { resultado ->
+            runOnUiThread {
+
+                resultado
+                    .onSuccess { categoria ->
+                        mostrarDetalle(
+                            actividad,
+                            categoria?.nombre ?: "Sin categoría"
+                        )
+                    }
+
+                    .onFailure {
+                        Toast.makeText(
+                            this,
+                            "No se pudo consultar la categoría",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
             }
-        )
-
-        val actividadesFiltradas = FiltroActividades.aplicar(
-            actividadesGuardadas,
-            criterios
-        )
-
-        adaptador.actualizarLista(actividadesFiltradas)
-
-        if (actividadesFiltradas.isEmpty()) {
-            binding.statusText.visibility = View.VISIBLE
-            binding.statusText.text =
-                if (actividadesGuardadas.isEmpty())
-                    "Todavía no hay actividades guardadas."
-                else
-                    "No hay actividades con los filtros seleccionados."
-        } else {
-            binding.statusText.visibility = View.GONE
         }
     }
 
-private fun mostrarDetalleConCategoria(actividad: Actividad) {
-    val categoriaId = actividad.categoriaId
+    // Mostrar detalle de una tarea o evento
+    private fun mostrarDetalle(
+        actividad: Actividad,
+        nombreCategoria: String
+    ) {
 
-    if (categoriaId == null) {
-        mostrarDetalle(actividad, "Sin categoría")
-        return
+        AlertDialog.Builder(this)
+            .setTitle("Detalle de la actividad")
+            .setMessage(
+                formatearActividad(
+                    actividad,
+                    nombreCategoria
+                )
+            )
+            .setPositiveButton("Cerrar", null)
+            .show()
     }
 
-    categoriaRepository.obtenerPorId(categoriaId) { resultado ->
-        runOnUiThread {
-            resultado
-                .onSuccess { categoria ->
-                    mostrarDetalle(actividad, categoria?.nombre ?: "Sin categoría")
-                }
-                .onFailure {
-                    Toast.makeText(
-                        this,
-                        "No se pudo consultar la categoría",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-        }
-    }
-}
+    // Preparar el texto del detalle
+    private fun formatearActividad(
+        actividad: Actividad,
+        nombreCategoria: String
+    ): String = buildString {
 
-private fun mostrarDetalle(
-    actividad: Actividad,
-    nombreCategoria: String
-) {
-    AlertDialog.Builder(this)
-        .setTitle("Detalle de la actividad")
-        .setMessage(formatearActividad(actividad, nombreCategoria))
-        .setPositiveButton("Cerrar", null)
-        .show()
-}
-private fun formatearActividad(
-    actividad: Actividad,
-    nombreCategoria: String
-): String =
-    buildString {
         append(actividad.titulo)
 
         append("\nTipo: ").append(
-            if (actividad.tipo == TipoActividad.TAREA) "Tarea" else "Evento"
+            if (actividad.tipo == TipoActividad.TAREA)
+                "Tarea"
+            else
+                "Evento"
         )
 
         actividad.descripcion
             ?.takeIf { it.isNotBlank() }
-            ?.let { append("\n").append(it) }
+            ?.let {
+                append("\n").append(it)
+            }
 
         actividad.fecha?.let {
-            append("\nFecha: ").append(it.format(FORMATO_FECHA))
+            append("\nFecha: ")
+            append(it.format(FORMATO_FECHA))
         }
 
         actividad.hora?.let {
-            append("\nHora: ").append(it.format(FORMATO_HORA))
+            append("\nHora: ")
+            append(it.format(FORMATO_HORA))
         }
 
-        append("\nPrioridad: ").append(actividad.prioridad)
+        append("\nPrioridad: ")
+        append(actividad.prioridad)
 
-        append("\nCategoría: ").append(nombreCategoria)
+        append("\nCategoría: ")
+        append(nombreCategoria)
 
-        append("\nRecordatorio: ").append(
-            nombreRecordatorio(actividad.recordatorio)
-        )
+        append("\nRecordatorio: ")
+        append(nombreRecordatorio(actividad.recordatorio))
 
         actividad.estadoTarea?.let {
-            append("\nEstado: ").append(it)
+            append("\nEstado: ")
+            append(it)
         }
     }
 
+    // Mostrar el nombre del recordatorio
+    private fun nombreRecordatorio(
+        recordatorio: AnticipacionRecordatorio?
+    ): String = when (recordatorio) {
 
+        AnticipacionRecordatorio.A_LA_HORA ->
+            "A la hora"
 
-private fun nombreRecordatorio(
-    recordatorio: AnticipacionRecordatorio?
-): String =
-    when (recordatorio) {
-        AnticipacionRecordatorio.A_LA_HORA -> "A la hora"
-        AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> "10 minutos antes"
-        AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> "30 minutos antes"
-        AnticipacionRecordatorio.UNA_HORA_ANTES -> "1 hora antes"
-        AnticipacionRecordatorio.UN_DIA_ANTES -> "1 día antes"
+        AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES ->
+            "10 minutos antes"
+
+        AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES ->
+            "30 minutos antes"
+
+        AnticipacionRecordatorio.UNA_HORA_ANTES ->
+            "1 hora antes"
+
+        AnticipacionRecordatorio.UN_DIA_ANTES ->
+            "1 día antes"
+
         null -> "Sin recordatorio"
     }
 
-private companion object {
-    val FORMATO_FECHA: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("dd/MM/uuuu")
+    private companion object {
 
-    val FORMATO_HORA: DateTimeFormatter =
-        DateTimeFormatter.ofPattern("HH:mm")
+        val FORMATO_FECHA: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("dd/MM/uuuu")
 
-        }
+        val FORMATO_HORA: DateTimeFormatter =
+            DateTimeFormatter.ofPattern("HH:mm")
     }
-
-
-
-
-
-
+}

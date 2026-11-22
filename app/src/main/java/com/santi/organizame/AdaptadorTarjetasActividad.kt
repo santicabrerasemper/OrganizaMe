@@ -8,7 +8,12 @@ import com.santi.organizame.modelo.Actividad
 import java.time.format.DateTimeFormatter
 import com.santi.organizame.modelo.EstadoTarea
 import android.view.View
+import java.time.LocalDateTime
 import com.santi.organizame.modelo.TipoActividad
+import android.graphics.Color
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import java.time.temporal.IsoFields
 
 class AdaptadorTarjetasActividad(
@@ -54,7 +59,40 @@ class AdaptadorTarjetasActividad(
             holder.binding.txtFechaGrupo.visibility = View.GONE
         }
 
-        holder.binding.txtTituloActividad.text = actividad.titulo
+
+        val ahora = LocalDateTime.now()
+
+        val vencida = actividad.tipo == TipoActividad.TAREA &&
+                actividad.estadoTarea == EstadoTarea.PENDIENTE &&
+                actividad.fecha?.let { fecha ->
+                    fecha.isBefore(ahora.toLocalDate()) ||
+                            (fecha.isEqual(ahora.toLocalDate()) &&
+                                    actividad.hora?.isBefore(ahora.toLocalTime()) == true)
+                } == true
+
+
+
+        val textoTitulo = if (vencida) {
+            "⚠ VENCIDA · ${actividad.titulo}"
+        } else {
+            actividad.titulo
+        }
+
+        val tituloConColor = SpannableString(textoTitulo)
+
+        if (vencida) {
+            val inicio = textoTitulo.indexOf("VENCIDA")
+
+            tituloConColor.setSpan(
+                ForegroundColorSpan(Color.parseColor("#D32F2F")),
+                inicio,
+                inicio + "VENCIDA".length,
+                Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+        }
+
+        holder.binding.txtTituloActividad.text = tituloConColor
+
 
         val esTarea = actividad.tipo == TipoActividad.TAREA
 
