@@ -18,6 +18,8 @@ import java.time.format.ResolverStyle
 import android.widget.Toast
 import android.view.View
 import java.time.Instant
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.santi.organizame.modelo.CategoriaRepository
 import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.OrganizaMeDatabase
@@ -33,6 +35,30 @@ class NuevaTareaActividad : AppCompatActivity() {
 
         binding = ActividadNuevaTareaBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        val vista = binding.root
+
+        val izquierda = vista.paddingLeft
+        val arriba = vista.paddingTop
+        val derecha = vista.paddingRight
+        val abajo = vista.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(vista) { _, insets ->
+            val barras = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+            vista.setPadding(
+                izquierda + barras.left,
+                arriba + barras.top,
+                derecha + barras.right,
+                abajo + barras.bottom
+            )
+
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(vista)
+
 
         binding.btnVolverNuevaTarea.setOnClickListener {
             finish()

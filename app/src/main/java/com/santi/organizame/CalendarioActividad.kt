@@ -11,6 +11,8 @@ import java.util.Locale
 import android.widget.Toast
 import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.ActividadRepository
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import com.santi.organizame.modelo.OrganizaMeDatabase
@@ -28,6 +30,36 @@ class CalendarioActividad : AppCompatActivity() {
 
         binding = ActivityCalendarioBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        val vista = binding.root
+
+        val izquierda = vista.paddingLeft
+        val arriba = vista.paddingTop
+        val derecha = vista.paddingRight
+        val abajo = vista.paddingBottom
+
+        ViewCompat.setOnApplyWindowInsetsListener(vista) { _, insets ->
+            val barras = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+            )
+
+            vista.setPadding(
+                izquierda + barras.left,
+                arriba + barras.top,
+                derecha + barras.right,
+                abajo + barras.bottom
+            )
+
+            insets
+        }
+
+        ViewCompat.requestApplyInsets(vista)
+
+
+
+
+
 
         findViewById<Button>(R.id.btnVolverCalendario).setOnClickListener {
             finish()
