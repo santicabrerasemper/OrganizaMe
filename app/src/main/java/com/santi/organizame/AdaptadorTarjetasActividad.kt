@@ -10,7 +10,7 @@ import com.santi.organizame.modelo.EstadoTarea
 import android.view.View
 import java.time.LocalDateTime
 import com.santi.organizame.modelo.TipoActividad
-import android.graphics.Color
+import androidx.core.content.ContextCompat
 import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
@@ -84,7 +84,9 @@ class AdaptadorTarjetasActividad(
             val inicio = textoTitulo.indexOf("VENCIDA")
 
             tituloConColor.setSpan(
-                ForegroundColorSpan(Color.parseColor("#D32F2F")),
+                ForegroundColorSpan(
+                    ContextCompat.getColor(holder.itemView.context, R.color.danger)
+                ),
                 inicio,
                 inicio + "VENCIDA".length,
                 Spanned.SPAN_EXCLUSIVE_EXCLUSIVE

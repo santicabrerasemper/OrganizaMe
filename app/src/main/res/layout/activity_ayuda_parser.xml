@@ -2,89 +2,113 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
     android:fillViewport="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:paddingStart="20dp"
+        android:paddingTop="12dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="32dp">
 
         <Button
             android:id="@+id/btnVolverAyuda"
+            style="@style/Widget.OrganizaMe.Button.Text"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:text="← Volver" />
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_primary_container"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Carga rápida en español"
+                android:textAppearance="@style/TextAppearance.OrganizaMe.ScreenTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Escribí una frase y OrganizaMe completará los campos que reconozca. Siempre vas a poder revisarlos antes de guardar."
+                android:textAppearance="@style/TextAppearance.OrganizaMe.Body"
+                android:textColor="@color/primary_dark" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/Widget.OrganizaMe.Card"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Carga rápida en español"
-            android:textColor="@color/primary"
-            android:textSize="28sp"
-            android:textStyle="bold" />
+            android:orientation="vertical"
+            android:padding="18dp">
 
-        <TextView
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ejemplos"
+                android:textAppearance="@style/TextAppearance.OrganizaMe.SectionTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="• estudiar mañana a las 18 descripción repasar unidad cinco recordatorio 30 minutos antes\n\n• reunión el viernes a las 10 prioridad alta recordatorio a la hora\n\n• tarea comprar remedios hoy urgente\n\n• turno dentista 15/10/2027 a las 09:30 recordatorio 1 día antes"
+                android:textAppearance="@style/TextAppearance.OrganizaMe.Body" />
+        </LinearLayout>
+
+        <LinearLayout
+            style="@style/Widget.OrganizaMe.Card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Escribí una frase y OrganizaMe completará los campos que pueda reconocer. Siempre podrás revisarlos y corregirlos antes de guardar."
-            android:textColor="@color/on_background"
-            android:textSize="16sp" />
+            android:layout_marginTop="14dp"
+            android:orientation="vertical"
+            android:padding="18dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Ejemplos"
-            android:textColor="@color/on_background"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Expresiones reconocidas"
+                android:textAppearance="@style/TextAppearance.OrganizaMe.SectionTitle" />
 
-        <TextView
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:text="Fechas\nhoy, mañana, pasado mañana, lunes a domingo, dd/MM/aaaa y dd-MM-aaaa.\n\nHoras\nHH:mm o ‘a las H’.\n\nPrioridad\nalta, media, baja o urgente.\n\nTipo\ntarea, evento, reunión, cita o turno.\n\nDescripción\nescribí ‘descripción’ y luego el detalle.\n\nRecordatorio\na la hora, 10 o 30 minutos antes, 1 hora antes o 1 día antes."
+                android:textAppearance="@style/TextAppearance.OrganizaMe.Body" />
+        </LinearLayout>
+
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="• estudiar mañana a las 18 descripción repasar unidad cinco recordatorio 30 minutos antes\n• reunión el viernes a las 10 prioridad alta recordatorio a la hora\n• tarea comprar remedios hoy urgente\n• turno dentista 15/10/2027 a las 09:30 recordatorio 1 día antes\n• entregar informe trabajo pasado mañana descripción adjuntar resumen prioridad baja"
-            android:textColor="@color/on_background"
-            android:textSize="16sp" />
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_warning_container"
+            android:orientation="vertical"
+            android:padding="18dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Expresiones reconocidas"
-            android:textColor="@color/on_background"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Antes de guardar"
+                android:textAppearance="@style/TextAppearance.OrganizaMe.SectionTitle"
+                android:textColor="@color/warning" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="Fechas: hoy, mañana, pasado mañana, lunes a domingo, dd/MM/aaaa y dd-MM-aaaa.\n\nHoras: HH:mm o ‘a las H’.\n\nPrioridad: prioridad alta, media, baja o urgente.\n\nTipo: tarea, evento, reunión, cita o turno.\n\nCategorías: nombre o palabras clave configuradas en la categoría.\n\nDescripción: escribí ‘descripción’ y luego el detalle.\n\nRecordatorio: ‘recordatorio a la hora’, ‘10 minutos antes’, ‘30 minutos antes’, ‘1 hora antes’ o ‘1 día antes’."
-            android:textColor="@color/on_background"
-            android:textSize="16sp" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Limitaciones"
-            android:textColor="@color/on_background"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="24dp"
-            android:text="El parser funciona con reglas acotadas y no intenta comprender lenguaje libre. Un recordatorio requiere fecha y hora futuras. Si encuentra valores diferentes para un mismo campo, datos inválidos o expresiones no soportadas, mostrará una advertencia para que los corrijas. Nunca guarda automáticamente."
-            android:textColor="@color/on_background"
-            android:textSize="16sp" />
-
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="El parser usa reglas acotadas. Si encuentra datos inválidos, ambiguos o no soportados, te pedirá que los corrijas. Un recordatorio necesita una fecha y una hora futuras."
+                android:textAppearance="@style/TextAppearance.OrganizaMe.Body"
+                android:textColor="@color/warning" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>

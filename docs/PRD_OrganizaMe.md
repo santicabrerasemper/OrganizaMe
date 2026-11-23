@@ -1,11 +1,11 @@
 # PRD — OrganizaMe
 
 **Producto:** OrganizaMe  
-**Versión del documento:** 1.0  
-**Estado:** Borrador listo para planificación  
+**Versión del documento:** 1.1
+**Estado:** En implementación
 **Plataforma:** Android nativo  
 **Tipo de entrega:** Prototipo académico / proyecto final  
-**Fecha:** 25 de septiembre de 2026
+**Fecha de actualización:** 23 de noviembre de 2026
 
 ---
 
@@ -180,12 +180,14 @@ Persona que necesita organizar estudio, trabajo y actividades personales desde s
 
 ### 7.1 Navegación principal
 
-La aplicación tendrá cuatro destinos principales:
+La aplicación parte de un **Inicio** que concentra los accesos principales:
 
-1. **Agenda:** actividades agrupadas por día, con acceso rápido a hoy.
-2. **Calendario:** mes visible y lista de actividades del día seleccionado.
-3. **Nueva actividad:** elección entre formulario manual e ingreso por texto.
-4. **Categorías/Ajustes:** administración de categorías y acceso a información sobre las frases soportadas.
+1. **Hoy:** resumen del día, vencidas, pendientes, completadas y eventos.
+2. **Tareas y eventos:** listado por secciones, búsqueda y filtros combinados.
+3. **Calendario:** mes visible y actividades del día seleccionado.
+4. **Nueva actividad:** formulario manual o confirmación de una frase interpretada.
+5. **Categorías:** administración de nombres, colores y palabras clave.
+6. **Ayuda:** ejemplos, gramática soportada y limitaciones del parser.
 
 ### 7.2 Pantallas mínimas
 
@@ -210,6 +212,45 @@ Cada listado debe contemplar:
 - Error recuperable.
 
 Los formularios deben indicar el campo inválido y la acción necesaria para corregirlo.
+
+### 7.4 Identidad visual y branding
+
+OrganizaMe debe transmitir calma, claridad y confianza. La interfaz utiliza espacios amplios, jerarquías tipográficas simples, tarjetas redondeadas y una paleta clara con verde como color principal y azul como acento de acción.
+
+#### Paleta principal
+
+| Token | Hexadecimal | Uso |
+|---|---|---|
+| Verde principal | `#0F766E` | Acciones principales, marca e indicadores activos. |
+| Verde oscuro | `#134E4A` | Títulos, énfasis y barra de estado. |
+| Azul secundario | `#2563EB` | Acciones alternativas, eventos y enlaces. |
+| Fondo | `#F8FAFC` | Fondo general de todas las pantallas. |
+| Texto principal | `#1E293B` | Texto de alto contraste. |
+
+#### Colores derivados y estados
+
+| Token | Hexadecimal | Uso |
+|---|---|---|
+| Superficie | `#FFFFFF` | Tarjetas, paneles y campos. |
+| Contenedor verde | `#CCFBF1` | Acciones tonales y destacados suaves. |
+| Contenedor azul | `#DBEAFE` | Eventos e información secundaria. |
+| Borde | `#CBD5E1` | Delimitación de tarjetas y campos. |
+| Texto secundario | `#475569` | Ayudas y metadatos. |
+| Éxito | `#15803D` / `#DCFCE7` | Tareas completadas. |
+| Advertencia | `#A16207` / `#FEF3C7` | Revisiones del parser. |
+| Error | `#B91C1C` / `#FEE2E2` | Actividades vencidas y acciones destructivas. |
+
+Los colores disponibles para categorías son verde OrganizaMe (`#0F766E`), azul (`#2563EB`), verde oscuro (`#134E4A`), ámbar (`#A16207`) y violeta (`#7C3AED`). Los estados nunca deben comunicarse únicamente mediante color: también deben incluir texto, icono o etiqueta.
+
+#### Reglas de componentes
+
+- Botones y campos tienen una altura táctil mínima de 48 dp.
+- Tarjetas y paneles usan radios de entre 14 y 18 dp, fondo blanco y bordes suaves.
+- Los botones principales usan verde; el azul se reserva para acciones alternativas y eventos.
+- Las acciones destructivas se presentan en rojo y requieren confirmación.
+- Los títulos de pantalla usan verde oscuro; los textos extensos utilizan el color secundario de texto.
+- El espaciado se construye con múltiplos de 4 dp y prioriza bloques de 12, 16, 20 y 24 dp.
+- La interfaz inicial se entrega con tema claro; una variante oscura queda fuera del alcance del MVP.
 
 ## 8. Flujos críticos
 
@@ -581,6 +622,7 @@ El parser no debe depender de Android ni de la base de datos. Debe recibir fecha
 | RNF-09 | El código de dominio crítico debe contar con pruebas unitarias. |
 | RNF-10 | La aplicación no debe registrar en logs de producción el contenido completo de las actividades. |
 | RNF-11 | El proyecto debe poder compilarse desde cero mediante instrucciones documentadas. |
+| RNF-12 | Todas las pantallas deben reutilizar los tokens y componentes definidos en la identidad visual, evitando colores de marca escritos directamente en los layouts o en la lógica. |
 
 Los límites de rendimiento son objetivos de aceptación para el prototipo, no garantías para todos los dispositivos Android.
 

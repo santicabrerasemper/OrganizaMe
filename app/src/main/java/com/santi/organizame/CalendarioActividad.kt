@@ -89,7 +89,7 @@ class CalendarioActividad : AppCompatActivity() {
     }
 
     private fun mostrarMes(fechasConActividades: Set<LocalDate>) {
-        val locale = Locale("es", "AR")
+        val locale = Locale.forLanguageTag("es-AR")
         val formatoMes = DateTimeFormatter.ofPattern("MMMM yyyy", locale)
 
         binding.textoMes.text = mesActual

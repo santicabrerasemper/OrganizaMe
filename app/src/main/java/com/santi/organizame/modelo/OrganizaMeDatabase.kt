@@ -33,15 +33,15 @@ abstract class OrganizaMeDatabase : RoomDatabase() {
 
                             db.execSQL(
                                 "INSERT INTO categorias (id, nombre, color, palabrasClave) " +
-                                        "VALUES (1, 'Personal', '#4CAF50', '')"
+                                        "VALUES (1, 'Personal', '#0F766E', '')"
                             )
                             db.execSQL(
                                 "INSERT INTO categorias (id, nombre, color, palabrasClave) " +
-                                        "VALUES (2, 'Estudio', '#2196F3', '')"
+                                        "VALUES (2, 'Estudio', '#2563EB', '')"
                             )
                             db.execSQL(
                                 "INSERT INTO categorias (id, nombre, color, palabrasClave) " +
-                                        "VALUES (3, 'Trabajo', '#FF9800', '')"
+                                        "VALUES (3, 'Trabajo', '#134E4A', '')"
                             )
                         }
                     })

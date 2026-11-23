@@ -23,6 +23,13 @@ class CategoriasActividad : AppCompatActivity() {
     private lateinit var categoriaRepository: CategoriaRepository
     private lateinit var adaptador: AdaptadorTarjetasCategoria
     private lateinit var textoEstado: TextView
+    private val coloresCategoria = listOf(
+        "Verde OrganizaMe" to "#0F766E",
+        "Azul" to "#2563EB",
+        "Verde oscuro" to "#134E4A",
+        "Ámbar" to "#A16207",
+        "Violeta" to "#7C3AED"
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -103,27 +110,19 @@ class CategoriasActividad : AppCompatActivity() {
         val campoPalabrasClave = EditText(this)
         campoPalabrasClave.hint = "Palabras clave separadas por comas"
 
-        val colores = listOf(
-            "Verde" to "#4CAF50",
-            "Azul" to "#2196F3",
-            "Naranja" to "#FF9800",
-            "Rojo" to "#F44336",
-            "Violeta" to "#9C27B0"
-        )
-
-        var colorSeleccionado = "#4CAF50"
+        var colorSeleccionado = "#0F766E"
 
         val botonColor = Button(this)
-        botonColor.text = "Color: Verde"
+        botonColor.text = "Color: Verde OrganizaMe"
 
         botonColor.setOnClickListener {
-            val nombres = colores.map { it.first }.toTypedArray()
+            val nombres = coloresCategoria.map { it.first }.toTypedArray()
 
             AlertDialog.Builder(this)
                 .setTitle("Seleccionar color")
                 .setItems(nombres) { _, posicion ->
-                    colorSeleccionado = colores[posicion].second
-                    botonColor.text = "Color: ${colores[posicion].first}"
+                    colorSeleccionado = coloresCategoria[posicion].second
+                    botonColor.text = "Color: ${coloresCategoria[posicion].first}"
                 }
                 .show()
         }
@@ -199,19 +198,11 @@ class CategoriasActividad : AppCompatActivity() {
         val campoPalabrasClave = EditText(this)
         campoPalabrasClave.hint = "Palabras clave separadas por comas"
         campoPalabrasClave.setText(categoria.palabrasClave.joinToString(", "))
-        val colores = listOf(
-            "Verde" to "#4CAF50",
-            "Azul" to "#2196F3",
-            "Naranja" to "#FF9800",
-            "Rojo" to "#F44336",
-            "Violeta" to "#9C27B0"
-        )
-
         var colorSeleccionado = categoria.color
 
         val botonColor = Button(this)
 
-        val nombreColor = colores.firstOrNull {
+        val nombreColor = coloresCategoria.firstOrNull {
             it.second.equals(colorSeleccionado, ignoreCase = true)
         }?.first ?: "Actual"
 
@@ -219,13 +210,13 @@ class CategoriasActividad : AppCompatActivity() {
 
 
         botonColor.setOnClickListener {
-            val nombres = colores.map { it.first }.toTypedArray()
+            val nombres = coloresCategoria.map { it.first }.toTypedArray()
 
             AlertDialog.Builder(this)
                 .setTitle("Seleccionar color")
                 .setItems(nombres) { _, posicion ->
-                    colorSeleccionado = colores[posicion].second
-                    botonColor.text = "Color: ${colores[posicion].first}"
+                    colorSeleccionado = coloresCategoria[posicion].second
+                    botonColor.text = "Color: ${coloresCategoria[posicion].first}"
                 }
                 .show()
         }

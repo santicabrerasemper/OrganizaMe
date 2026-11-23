@@ -4,63 +4,86 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/background">
+    android:layout_height="match_parent">
+
+    <Button
+        android:id="@+id/btnVolverCategorias"
+        style="@style/Widget.OrganizaMe.Button.Text"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        android:text="← Volver"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tituloCategorias"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="20dp"
         android:text="Mis categorías"
-        android:textAppearance="@style/TextAppearance.Material3.HeadlineLarge"
-        android:textColor="@color/primary"
-        android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/btnVolverCategorias"
+        android:textAppearance="@style/TextAppearance.OrganizaMe.ScreenTitle"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/btnVolverCategorias" />
+
+    <TextView
+        android:id="@+id/subtituloCategorias"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="20dp"
+        android:text="Usalas para agrupar actividades y mejorar la carga rápida."
+        android:textAppearance="@style/TextAppearance.OrganizaMe.Body"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tituloCategorias" />
 
     <Button
         android:id="@+id/btnNuevaCategoria"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        style="@style/Widget.OrganizaMe.Button.Primary"
+        android:layout_width="0dp"
+        android:layout_height="54dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="16dp"
-        android:text="Nueva categoría"
-        app:layout_constraintTop_toBottomOf="@id/tituloCategorias"
+        android:layout_marginEnd="20dp"
+        android:text="＋ Nueva categoría"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/subtituloCategorias" />
 
     <TextView
         android:id="@+id/textoEstadoCategorias"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_primary_container"
         android:gravity="center"
+        android:padding="16dp"
         android:text="Las categorías se mostrarán aquí"
-        android:textColor="@color/on_background"
-        app:layout_constraintTop_toBottomOf="@id/btnNuevaCategoria"
+        android:textColor="@color/primary_dark"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/btnNuevaCategoria" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/listaCategorias"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/textoEstadoCategorias"
+        android:clipToPadding="false"
+        android:paddingStart="20dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="20dp"
+        android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <Button
-        android:id="@+id/btnVolverCategorias"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
-        android:text="← Volver"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@id/textoEstadoCategorias" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

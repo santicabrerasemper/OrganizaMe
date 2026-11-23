@@ -2,7 +2,6 @@
 package com.santi.organizame
 
 import android.content.Intent
-import android.graphics.Color
 import android.graphics.Typeface
 import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
@@ -16,6 +15,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.santi.organizame.modelo.Actividad
@@ -127,7 +127,7 @@ class HoyActividad : AppCompatActivity() {
         // Mostrar la fecha actual
         val formatoFecha = DateTimeFormatter.ofPattern(
             "EEEE d 'de' MMMM",
-            Locale("es", "AR")
+            Locale.forLanguageTag("es-AR")
         )
 
         findViewById<TextView>(R.id.fechaHoy).text =
@@ -209,9 +209,7 @@ class HoyActividad : AppCompatActivity() {
                     setTypeface(null, Typeface.BOLD)
 
                     setTextColor(
-                        Color.parseColor(
-                            if (esVencida) "#B91C1C" else "#0F766E"
-                        )
+                        color(if (esVencida) R.color.danger else R.color.primary)
                     )
 
                     setPadding(
@@ -225,9 +223,9 @@ class HoyActividad : AppCompatActivity() {
                         cornerRadius = dp(12).toFloat()
 
                         setColor(
-                            Color.parseColor(
-                                if (esVencida) "#FEE2E2"
-                                else "#E6F4F1"
+                            color(
+                                if (esVencida) R.color.danger_container
+                                else R.color.primary_container
                             )
                         )
                     }
@@ -285,7 +283,7 @@ class HoyActividad : AppCompatActivity() {
         val encabezado = TextView(this).apply {
             text = titulo
             textSize = 20f
-            setTextColor(Color.parseColor("#0F766E"))
+            setTextColor(color(R.color.primary_dark))
             setPadding(0, dp(12), 0, dp(12))
         }
 
@@ -301,7 +299,7 @@ class HoyActividad : AppCompatActivity() {
                 }
 
                 textSize = 16f
-                setTextColor(Color.parseColor("#475569"))
+                setTextColor(color(R.color.on_surface_variant))
                 setPadding(0, dp(16), 0, dp(16))
             })
 
@@ -338,9 +336,7 @@ class HoyActividad : AppCompatActivity() {
                 val inicio = textoTitulo.indexOf("VENCIDA")
 
                 tituloConColor.setSpan(
-                    ForegroundColorSpan(
-                        Color.parseColor("#D32F2F")
-                    ),
+                    ForegroundColorSpan(color(R.color.danger)),
                     inicio,
                     inicio + "VENCIDA".length,
                     Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -363,9 +359,9 @@ class HoyActividad : AppCompatActivity() {
 
                     setColor(
                         if (vencida) {
-                            Color.parseColor("#FEE2E2")
+                            color(R.color.danger_container)
                         } else {
-                            Color.WHITE
+                            color(R.color.surface)
                         }
                     )
                 }
@@ -383,7 +379,7 @@ class HoyActividad : AppCompatActivity() {
                 text = tituloConColor
                 textSize = 17f
                 setTypeface(null, Typeface.BOLD)
-                setTextColor(Color.parseColor("#0F766E"))
+                setTextColor(color(R.color.primary_dark))
             }
 
             // Estado, hora y fecha
@@ -413,7 +409,7 @@ class HoyActividad : AppCompatActivity() {
                 }
 
                 textSize = 14f
-                setTextColor(Color.parseColor("#475569"))
+                setTextColor(color(R.color.on_surface_variant))
                 setPadding(0, dp(6), 0, 0)
             }
 
@@ -429,10 +425,10 @@ class HoyActividad : AppCompatActivity() {
 
                 backgroundTintList =
                     android.content.res.ColorStateList.valueOf(
-                        Color.parseColor("#0F766E")
+                        color(R.color.primary)
                     )
 
-                setTextColor(Color.WHITE)
+                setTextColor(color(R.color.on_primary))
 
                 setOnClickListener {
                     tarjeta.performClick()
@@ -459,4 +455,6 @@ class HoyActividad : AppCompatActivity() {
     // Convertir medidas a dp
     private fun dp(valor: Int): Int =
         (valor * resources.displayMetrics.density).toInt()
+
+    private fun color(id: Int): Int = ContextCompat.getColor(this, id)
 }

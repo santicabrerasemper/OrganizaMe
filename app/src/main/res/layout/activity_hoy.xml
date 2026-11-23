@@ -5,31 +5,28 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/background"
     android:padding="16dp">
 
     <Button
         android:id="@+id/btnVolverHoy"
+        style="@style/Widget.OrganizaMe.Button.Text"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="48dp"
         android:text="← Volver" />
 
     <TextView
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="8dp"
         android:text="Mi día"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="@color/primary" />
+        android:textAppearance="@style/TextAppearance.OrganizaMe.ScreenTitle" />
 
     <TextView
         android:id="@+id/fechaHoy"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:textColor="@color/on_background"
-        android:textSize="16sp" />
+        android:textAppearance="@style/TextAppearance.OrganizaMe.Body" />
 
     <LinearLayout
         android:id="@+id/resumenHoy"
@@ -41,16 +38,17 @@
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="10dp"
         android:layout_weight="1"
-        android:layout_marginTop="12dp"
-        android:fillViewport="true">
+        android:clipToPadding="false"
+        android:fillViewport="true"
+        android:paddingBottom="16dp">
 
         <LinearLayout
             android:id="@+id/contenedorActividadesHoy"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical" />
-
     </ScrollView>
 
 </LinearLayout>

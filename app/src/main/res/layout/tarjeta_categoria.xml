@@ -3,47 +3,52 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    android:padding="12dp"
+    android:layout_marginBottom="12dp"
+    android:background="@drawable/bg_card"
+    android:elevation="2dp"
     android:orientation="vertical"
-    android:background="@color/background"
-    android:elevation="2dp">
+    android:padding="16dp">
 
     <View
         android:id="@+id/indicadorColorCategoria"
         android:layout_width="match_parent"
-        android:layout_height="8dp"
-        android:layout_marginBottom="8dp"
-        android:background="#4CAF50" />
+        android:layout_height="10dp"
+        android:layout_marginBottom="14dp"
+        android:background="@color/primary" />
 
     <TextView
         android:id="@+id/nombreCategoria"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Nombre de categoría"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="@color/on_background" />
+        android:textColor="@color/on_background"
+        android:textSize="19sp"
+        android:textStyle="bold" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end">
+        android:layout_marginTop="10dp"
+        android:gravity="end"
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/btnEditarCategoria"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            style="@style/Widget.OrganizaMe.Button.Tonal"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
             android:text="Editar" />
 
         <Button
             android:id="@+id/btnEliminarCategoria"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
+            style="@style/Widget.OrganizaMe.Button.Danger"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
             android:text="Eliminar" />
-
     </LinearLayout>
 
 </LinearLayout>

@@ -1,0 +1,115 @@
+<resources>
+
+    <style name="TextAppearance.OrganizaMe.Brand" parent="TextAppearance.Material3.DisplaySmall">
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.OrganizaMe.ScreenTitle" parent="TextAppearance.Material3.HeadlineMedium">
+        <item name="android:textColor">@color/primary_dark</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">-0.01</item>
+    </style>
+
+    <style name="TextAppearance.OrganizaMe.SectionTitle" parent="TextAppearance.Material3.TitleLarge">
+        <item name="android:textColor">@color/on_background</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="TextAppearance.OrganizaMe.Body" parent="TextAppearance.Material3.BodyLarge">
+        <item name="android:textColor">@color/on_surface_variant</item>
+    </style>
+
+    <style name="TextAppearance.OrganizaMe.Label" parent="TextAppearance.Material3.LabelLarge">
+        <item name="android:textColor">@color/on_background</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.Primary" parent="Widget.Material3.Button">
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.Secondary" parent="Widget.OrganizaMe.Button.Primary">
+        <item name="backgroundTint">@color/secondary</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.Tonal" parent="Widget.Material3.Button.TonalButton">
+        <item name="backgroundTint">@color/primary_container</item>
+        <item name="android:textColor">@color/primary_dark</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.BlueTonal" parent="Widget.OrganizaMe.Button.Tonal">
+        <item name="backgroundTint">@color/secondary_container</item>
+        <item name="android:textColor">@color/secondary</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.SuccessTonal" parent="Widget.OrganizaMe.Button.Tonal">
+        <item name="backgroundTint">@color/success_container</item>
+        <item name="android:textColor">@color/success</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.DangerTonal" parent="Widget.OrganizaMe.Button.Tonal">
+        <item name="backgroundTint">@color/danger_container</item>
+        <item name="android:textColor">@color/danger</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.Outlined" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">15sp</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="cornerRadius">14dp</item>
+        <item name="strokeColor">@color/outline</item>
+        <item name="strokeWidth">1dp</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.Text" parent="Widget.Material3.Button.TextButton">
+        <item name="android:textColor">@color/primary</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:minHeight">48dp</item>
+        <item name="cornerRadius">14dp</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Button.Danger" parent="Widget.OrganizaMe.Button.Outlined">
+        <item name="android:textColor">@color/danger</item>
+        <item name="strokeColor">@color/danger</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Input" parent="">
+        <item name="android:background">@drawable/bg_input</item>
+        <item name="android:textColor">@color/on_background</item>
+        <item name="android:textColorHint">@color/on_surface_variant</item>
+        <item name="android:minHeight">56dp</item>
+        <item name="android:paddingStart">16dp</item>
+        <item name="android:paddingTop">12dp</item>
+        <item name="android:paddingEnd">16dp</item>
+        <item name="android:paddingBottom">12dp</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Spinner" parent="">
+        <item name="android:backgroundTint">@color/primary</item>
+        <item name="android:minHeight">52dp</item>
+        <item name="android:paddingStart">12dp</item>
+        <item name="android:paddingEnd">12dp</item>
+    </style>
+
+    <style name="Widget.OrganizaMe.Card" parent="">
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:elevation">2dp</item>
+    </style>
+
+</resources>

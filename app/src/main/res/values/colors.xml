@@ -1,8 +1,26 @@
 <resources>
+    <!-- Paleta principal de marca -->
     <color name="primary">#0F766E</color>
     <color name="primary_dark">#134E4A</color>
     <color name="secondary">#2563EB</color>
     <color name="background">#F8FAFC</color>
     <color name="on_background">#1E293B</color>
+
+    <!-- Superficies y variantes derivadas -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#F1F5F9</color>
+    <color name="on_surface_variant">#475569</color>
+    <color name="outline">#CBD5E1</color>
+    <color name="primary_container">#CCFBF1</color>
+    <color name="secondary_container">#DBEAFE</color>
+
+    <!-- Estados semánticos -->
+    <color name="success">#15803D</color>
+    <color name="success_container">#DCFCE7</color>
+    <color name="warning">#A16207</color>
+    <color name="warning_container">#FEF3C7</color>
+    <color name="danger">#B91C1C</color>
+    <color name="danger_container">#FEE2E2</color>
 </resources>
 

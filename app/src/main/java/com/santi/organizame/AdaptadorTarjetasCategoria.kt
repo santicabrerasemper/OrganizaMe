@@ -7,6 +7,7 @@ import android.widget.Button
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
 import com.santi.organizame.modelo.Categoria
 
 class AdaptadorTarjetasCategoria(
@@ -51,9 +52,10 @@ class AdaptadorTarjetasCategoria(
 
         holder.nombreCategoria.text = categoria.nombre
 
-        holder.indicadorColorCategoria.setBackgroundColor(
-            Color.parseColor(categoria.color)
-        )
+        holder.indicadorColorCategoria.background = GradientDrawable().apply {
+            cornerRadius = 10f * holder.itemView.resources.displayMetrics.density
+            setColor(Color.parseColor(categoria.color))
+        }
 
         holder.btnEditar.setOnClickListener {
             alEditar(categoria)

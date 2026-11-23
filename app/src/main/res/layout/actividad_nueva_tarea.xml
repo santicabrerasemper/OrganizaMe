@@ -1,137 +1,205 @@
 <?xml version="1.0" encoding="utf-8"?>
-
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="24dp"
+    android:paddingStart="20dp"
+    android:paddingEnd="20dp"
     tools:context=".NuevaTareaActividad">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent">
+        app:layout_constraintTop_toTopOf="parent">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:paddingBottom="32dp">
+            android:paddingTop="16dp"
+            android:paddingBottom="36dp">
 
             <Button
                 android:id="@+id/btnVolverNuevaTarea"
+                style="@style/Widget.OrganizaMe.Button.Text"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_height="48dp"
                 android:text="← Volver" />
 
             <TextView
                 android:id="@+id/tituloFormulario"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
                 android:text="Nueva tarea"
-                android:textSize="28sp"
-                android:textStyle="bold"
-                android:layout_marginBottom="24dp" />
+                android:textAppearance="@style/TextAppearance.OrganizaMe.ScreenTitle" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Completá los datos principales. Podés editarlos más adelante."
+                android:textAppearance="@style/TextAppearance.OrganizaMe.Body" />
 
             <TextView
                 android:id="@+id/resumenInterpretacion"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:background="#FFF3CD"
-                android:padding="12dp"
-                android:textColor="#5F4500"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_warning_container"
+                android:padding="16dp"
+                android:textColor="@color/warning"
                 android:visibility="gone" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Tipo de Actividad" />
-
-            <Spinner
-                android:id="@+id/tipoActividad"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <EditText
-                android:id="@+id/tituloTarea"
+            <LinearLayout
+                style="@style/Widget.OrganizaMe.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Título" />
+                android:layout_marginTop="18dp"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-            <EditText
-                android:id="@+id/descripcionTarea"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Información general"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.SectionTitle" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Tipo de actividad"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.Label" />
+
+                <Spinner
+                    android:id="@+id/tipoActividad"
+                    style="@style/Widget.OrganizaMe.Spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <EditText
+                    android:id="@+id/tituloTarea"
+                    style="@style/Widget.OrganizaMe.Input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Título"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapSentences"
+                    android:singleLine="true" />
+
+                <EditText
+                    android:id="@+id/descripcionTarea"
+                    style="@style/Widget.OrganizaMe.Input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="top|start"
+                    android:hint="Descripción opcional"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapSentences|textMultiLine"
+                    android:maxLines="4"
+                    android:minHeight="88dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/Widget.OrganizaMe.Card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Descripción"
-                android:layout_marginTop="12dp" />
+                android:layout_marginTop="14dp"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-            <EditText
-                android:id="@+id/fechaTarea"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Fecha (dd/MM/aaaa)"
-                android:inputType="date"
-                android:layout_marginTop="12dp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Planificación"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.SectionTitle" />
 
-            <EditText
-                android:id="@+id/horaTarea"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Hora (HH:mm)"
-                android:inputType="time"
-                android:layout_marginTop="12dp" />
+                <EditText
+                    android:id="@+id/fechaTarea"
+                    style="@style/Widget.OrganizaMe.Input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:hint="Fecha (dd/MM/aaaa)"
+                    android:importantForAutofill="no"
+                    android:inputType="date"
+                    android:singleLine="true" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Prioridad" />
+                <EditText
+                    android:id="@+id/horaTarea"
+                    style="@style/Widget.OrganizaMe.Input"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:hint="Hora (HH:mm)"
+                    android:importantForAutofill="no"
+                    android:inputType="time"
+                    android:singleLine="true" />
 
-            <Spinner
-                android:id="@+id/prioridadTarea"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:text="Prioridad"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.Label" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Categoría" />
+                <Spinner
+                    android:id="@+id/prioridadTarea"
+                    style="@style/Widget.OrganizaMe.Spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <Spinner
-                android:id="@+id/categoriaTarea"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Categoría"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.Label" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="Recordatorio" />
+                <Spinner
+                    android:id="@+id/categoriaTarea"
+                    style="@style/Widget.OrganizaMe.Spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <Spinner
-                android:id="@+id/recordatorioTarea"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Recordatorio"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.Label" />
+
+                <Spinner
+                    android:id="@+id/recordatorioTarea"
+                    style="@style/Widget.OrganizaMe.Spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="Para usar un recordatorio necesitás completar fecha y hora."
+                    android:textAppearance="@style/TextAppearance.Material3.BodySmall"
+                    android:textColor="@color/on_surface_variant" />
+            </LinearLayout>
 
             <Button
                 android:id="@+id/btnGuardarTarea"
+                style="@style/Widget.OrganizaMe.Button.Primary"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_height="58dp"
+                android:layout_marginTop="18dp"
                 android:text="Guardar tarea" />
-
         </LinearLayout>
-
     </ScrollView>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
