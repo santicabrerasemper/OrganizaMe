@@ -1,6 +1,7 @@
 package com.santi.organizame.parser
 
 import com.santi.organizame.modelo.Categoria
+import com.santi.organizame.modelo.AnticipacionRecordatorio
 import com.santi.organizame.modelo.Prioridad
 import com.santi.organizame.modelo.TipoActividad
 import org.junit.Assert.assertTrue
@@ -40,7 +41,9 @@ class EvaluacionCorpusParserTest {
             "fecha" to 0,
             "hora" to 0,
             "prioridad" to 0,
-            "categoria" to 0
+            "categoria" to 0,
+            "descripcion" to 0,
+            "recordatorio" to 0
         )
         var coincidenciasExactas = 0
 
@@ -52,7 +55,9 @@ class EvaluacionCorpusParserTest {
                 "fecha" to (resultado.fecha.valor == caso.fecha),
                 "hora" to (resultado.hora.valor == caso.hora),
                 "prioridad" to (resultado.prioridad.valor == caso.prioridad),
-                "categoria" to (resultado.categoriaId.valor == caso.categoriaId)
+                "categoria" to (resultado.categoriaId.valor == caso.categoriaId),
+                "descripcion" to (resultado.descripcion.valor == caso.descripcion),
+                "recordatorio" to (resultado.recordatorio.valor == caso.recordatorio)
             )
 
             comparaciones.forEach { (campo, coincide) ->
@@ -94,7 +99,7 @@ class EvaluacionCorpusParserTest {
                 .filter(String::isNotBlank)
                 .map { linea ->
                     val campos = linea.split('|')
-                    require(campos.size == 8) { "Fila inválida del corpus: $linea" }
+                    require(campos.size == 10) { "Fila inválida del corpus: $linea" }
                     CasoCorpus(
                         frase = campos[1],
                         titulo = campos[2],
@@ -102,7 +107,10 @@ class EvaluacionCorpusParserTest {
                         fecha = campos[4].valorOpcional()?.let(LocalDate::parse),
                         hora = campos[5].valorOpcional()?.let(LocalTime::parse),
                         prioridad = Prioridad.valueOf(campos[6]),
-                        categoriaId = campos[7].valorOpcional()?.toLong()
+                        categoriaId = campos[7].valorOpcional()?.toLong(),
+                        descripcion = campos[8].valorOpcional(),
+                        recordatorio = campos[9].valorOpcional()
+                            ?.let(AnticipacionRecordatorio::valueOf)
                     )
                 }
                 .toList()
@@ -118,7 +126,9 @@ class EvaluacionCorpusParserTest {
         val fecha: LocalDate?,
         val hora: LocalTime?,
         val prioridad: Prioridad,
-        val categoriaId: Long?
+        val categoriaId: Long?,
+        val descripcion: String?,
+        val recordatorio: AnticipacionRecordatorio?
     )
 
     private companion object {

@@ -1,6 +1,7 @@
 package com.santi.organizame.parser
 
 import com.santi.organizame.modelo.Categoria
+import com.santi.organizame.modelo.AnticipacionRecordatorio
 import com.santi.organizame.modelo.Prioridad
 import com.santi.organizame.modelo.TipoActividad
 import org.junit.Assert.assertEquals
@@ -151,5 +152,68 @@ class ParserActividadTest {
         )
 
         assertEquals(LocalDate.of(2027, 1, 10), resultado.fecha.valor)
+    }
+
+    @Test
+    fun extraeDescripcionYLaExcluyeDelTitulo() {
+        val resultado = parser.interpretar(
+            "tarea preparar presentación mañana descripcion incluir métricas del proyecto prioridad alta",
+            ahora,
+            emptyList()
+        )
+
+        assertEquals("preparar presentación", resultado.titulo.valor)
+        assertEquals("incluir métricas del proyecto", resultado.descripcion.valor)
+        assertEquals(EstadoCampoParser.EXTRAIDO, resultado.descripcion.estado)
+        assertEquals(Prioridad.ALTA, resultado.prioridad.valor)
+    }
+
+    @Test
+    fun interpretaTodosLosRecordatoriosSoportados() {
+        val casos = mapOf(
+            "a la hora" to AnticipacionRecordatorio.A_LA_HORA,
+            "10 minutos antes" to AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES,
+            "30 minutos antes" to AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES,
+            "1 hora antes" to AnticipacionRecordatorio.UNA_HORA_ANTES,
+            "1 día antes" to AnticipacionRecordatorio.UN_DIA_ANTES
+        )
+
+        casos.forEach { (expresion, recordatorioEsperado) ->
+            val resultado = parser.interpretar(
+                "pagar factura mañana a las 18 recordatorio $expresion",
+                ahora,
+                emptyList()
+            )
+
+            assertEquals(recordatorioEsperado, resultado.recordatorio.valor)
+            assertEquals(EstadoCampoParser.EXTRAIDO, resultado.recordatorio.estado)
+            assertEquals("pagar factura", resultado.titulo.valor)
+        }
+    }
+
+    @Test
+    fun marcaRecordatorioNoSoportadoComoInvalido() {
+        val resultado = parser.interpretar(
+            "pagar factura mañana recordatorio 2 horas antes",
+            ahora,
+            emptyList()
+        )
+
+        assertEquals(EstadoCampoParser.INVALIDO, resultado.recordatorio.estado)
+        assertNull(resultado.recordatorio.valor)
+        assertTrue(resultado.advertencias.any { it.contains("formato del recordatorio") })
+    }
+
+    @Test
+    fun marcaDosRecordatoriosDiferentesComoAmbiguos() {
+        val resultado = parser.interpretar(
+            "pagar factura mañana recordatorio a la hora recordatorio 10 minutos antes",
+            ahora,
+            emptyList()
+        )
+
+        assertEquals(EstadoCampoParser.AMBIGUO, resultado.recordatorio.estado)
+        assertNull(resultado.recordatorio.valor)
+        assertTrue(resultado.requiereRevision)
     }
 }

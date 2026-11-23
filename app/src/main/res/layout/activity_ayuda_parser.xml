@@ -47,7 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="• estudiar mañana a las 18\n• reunión el viernes a las 10 prioridad alta\n• tarea comprar remedios hoy urgente\n• turno dentista 15/10/2027 a las 09:30\n• entregar informe trabajo pasado mañana prioridad baja"
+            android:text="• estudiar mañana a las 18 descripción repasar unidad cinco recordatorio 30 minutos antes\n• reunión el viernes a las 10 prioridad alta recordatorio a la hora\n• tarea comprar remedios hoy urgente\n• turno dentista 15/10/2027 a las 09:30 recordatorio 1 día antes\n• entregar informe trabajo pasado mañana descripción adjuntar resumen prioridad baja"
             android:textColor="@color/on_background"
             android:textSize="16sp" />
 
@@ -64,7 +64,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:text="Fechas: hoy, mañana, pasado mañana, lunes a domingo, dd/MM/aaaa y dd-MM-aaaa.\n\nHoras: HH:mm o ‘a las H’.\n\nPrioridad: prioridad alta, media, baja o urgente.\n\nTipo: tarea, evento, reunión, cita o turno.\n\nCategorías: nombre o palabras clave configuradas en la categoría."
+            android:text="Fechas: hoy, mañana, pasado mañana, lunes a domingo, dd/MM/aaaa y dd-MM-aaaa.\n\nHoras: HH:mm o ‘a las H’.\n\nPrioridad: prioridad alta, media, baja o urgente.\n\nTipo: tarea, evento, reunión, cita o turno.\n\nCategorías: nombre o palabras clave configuradas en la categoría.\n\nDescripción: escribí ‘descripción’ y luego el detalle.\n\nRecordatorio: ‘recordatorio a la hora’, ‘10 minutos antes’, ‘30 minutos antes’, ‘1 hora antes’ o ‘1 día antes’."
             android:textColor="@color/on_background"
             android:textSize="16sp" />
 
@@ -82,7 +82,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:layout_marginBottom="24dp"
-            android:text="El parser funciona con reglas acotadas y no intenta comprender lenguaje libre. Si encuentra dos fechas u horarios, datos inválidos o expresiones no soportadas, mostrará una advertencia para que los corrijas. Nunca guarda automáticamente."
+            android:text="El parser funciona con reglas acotadas y no intenta comprender lenguaje libre. Un recordatorio requiere fecha y hora futuras. Si encuentra valores diferentes para un mismo campo, datos inválidos o expresiones no soportadas, mostrará una advertencia para que los corrijas. Nunca guarda automáticamente."
             android:textColor="@color/on_background"
             android:textSize="16sp" />
 

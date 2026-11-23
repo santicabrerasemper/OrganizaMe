@@ -25,6 +25,8 @@ Medir el parser determinístico de OrganizaMe con un corpus versionado y una fec
 | Hora | 100 % |
 | Prioridad | 100 % |
 | Categoría | 100 % |
+| Descripción | 100 % |
+| Recordatorio | 100 % |
 | Coincidencia exacta de la actividad | 100 % |
 
 ## Ejecución
@@ -39,4 +41,4 @@ La prueba lee el corpus, compara cada campo esperado y verifica el umbral mínim
 
 ## Alcance del resultado
 
-El corpus cubre únicamente la gramática documentada: fechas relativas y absolutas, días semanales, horarios de 24 horas, tipos explícitos y alias acotados, prioridades y categorías configuradas. El 100 % no representa comprensión de lenguaje natural general. Casos ambiguos, inválidos y expresiones no soportadas se prueban por separado en `ParserActividadTest`.
+El corpus cubre únicamente la gramática documentada: fechas relativas y absolutas, días semanales, horarios de 24 horas, tipos explícitos y alias acotados, prioridades, categorías configuradas, descripciones y las cinco anticipaciones de recordatorio soportadas. El 100 % no representa comprensión de lenguaje natural general. Casos ambiguos, inválidos y expresiones no soportadas se prueban por separado en `ParserActividadTest`.

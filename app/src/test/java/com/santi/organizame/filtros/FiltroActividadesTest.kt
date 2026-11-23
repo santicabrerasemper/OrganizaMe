@@ -60,6 +60,26 @@ class FiltroActividadesTest {
     }
 
     @Test
+    fun buscaVariasPalabrasSinTildesEntreTituloYDescripcion() {
+        val resultado = FiltroActividades.aplicar(
+            actividades,
+            CriteriosFiltroActividad(texto = "reunion presentacion")
+        )
+
+        assertEquals(listOf(3L), resultado.map(Actividad::id))
+    }
+
+    @Test
+    fun exigeQueTodasLasPalabrasBuscadasCoincidan() {
+        val resultado = FiltroActividades.aplicar(
+            actividades,
+            CriteriosFiltroActividad(texto = "algebra inexistente")
+        )
+
+        assertEquals(emptyList<Actividad>(), resultado)
+    }
+
+    @Test
     fun filtraUnaCategoriaEspecifica() {
         val resultado = FiltroActividades.aplicar(
             actividades,

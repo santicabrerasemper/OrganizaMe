@@ -130,10 +130,12 @@ class ListaActividadesActividad : AppCompatActivity() {
             )
         )
 
+        // Preparar una sola vez los controles compartidos por todas las secciones.
+        configurarFiltros()
+
         // Preparar las listas desplegables
         secciones.forEach { seccion ->
             val lista = findViewById<RecyclerView>(seccion.idLista)
-            configurarFiltros()
             lista.layoutManager = LinearLayoutManager(this)
             lista.adapter = seccion.adaptador
             lista.isNestedScrollingEnabled = false
@@ -333,12 +335,6 @@ class ListaActividadesActividad : AppCompatActivity() {
             R.id.buscarTitulo
         ).text.toString().trim()
 
-        // Separar la búsqueda en palabras
-        val palabras = busqueda.split(Regex("\\s+"))
-            .filter { it.isNotBlank() }
-
-        // Buscar por título o descripción
-
         val posicionCategoria =
             findViewById<Spinner>(R.id.filtroCategoria).selectedItemPosition
 
@@ -352,7 +348,7 @@ class ListaActividadesActividad : AppCompatActivity() {
             findViewById<Spinner>(R.id.filtroTipo).selectedItemPosition
 
         val criterios = CriteriosFiltroActividad(
-            texto = "",
+            texto = busqueda,
             categoriaId = if (posicionCategoria >= 2) {
                 categoriasFiltro.getOrNull(posicionCategoria - 2)?.id
             } else {
@@ -377,21 +373,10 @@ class ListaActividadesActividad : AppCompatActivity() {
             }
         )
 
-        val actividadesFiltradas = FiltroActividades.aplicar(
+        val actividades = FiltroActividades.aplicar(
             actividadesGuardadas,
             criterios
         )
-
-        val actividades = actividadesFiltradas.filter { actividad ->
-            palabras.all { palabra ->
-                actividad.titulo.contains(palabra, ignoreCase = true) ||
-                        actividad.descripcion?.contains(
-                            palabra,
-                            ignoreCase = true
-                        ) == true
-            }
-        }
-
 
         val ahora = LocalDateTime.now()
 

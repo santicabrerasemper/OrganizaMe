@@ -47,6 +47,10 @@ dependencies {
     implementation(libs.material)
     implementation(libs.room.runtime)
     testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.room.testing)
     ksp(libs.room.compiler)
 }
 

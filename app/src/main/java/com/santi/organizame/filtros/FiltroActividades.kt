@@ -45,8 +45,14 @@ object FiltroActividades {
     private fun coincideTexto(actividad: Actividad, textoBuscado: String): Boolean {
         if (textoBuscado.isBlank()) return true
 
-        return normalizar(actividad.titulo).contains(textoBuscado) ||
-            normalizar(actividad.descripcion.orEmpty()).contains(textoBuscado)
+        val contenido = normalizar(
+            "${actividad.titulo} ${actividad.descripcion.orEmpty()}"
+        )
+        val palabras = textoBuscado
+            .split(Regex("\\s+"))
+            .filter(String::isNotBlank)
+
+        return palabras.all(contenido::contains)
     }
 
     private fun normalizar(texto: String): String =
