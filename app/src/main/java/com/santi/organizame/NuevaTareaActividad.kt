@@ -312,7 +312,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                         .onFailure {
                             Toast.makeText(
                                 this,
-                                "No se pudo cargar la tarea",
+                                "No se pudo cargar la actividad",
                                 Toast.LENGTH_LONG
                             ).show()
                         }
@@ -442,7 +442,7 @@ class NuevaTareaActividad : AppCompatActivity() {
 
                                 Toast.makeText(
                                     this,
-                                    "No se pudo guardar la tarea",
+                                    "No se pudo guardar la actividad",
                                     Toast.LENGTH_LONG
                                 ).show()
                             }

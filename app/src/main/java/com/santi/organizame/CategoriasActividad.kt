@@ -113,7 +113,8 @@ class CategoriasActividad : AppCompatActivity() {
         var colorSeleccionado = "#0F766E"
 
         val botonColor = Button(this)
-        botonColor.text = "Color: Verde OrganizaMe"
+        botonColor.isAllCaps = false
+        botonColor.text = "Elegir color: Verde OrganizaMe"
 
         botonColor.setOnClickListener {
             val nombres = coloresCategoria.map { it.first }.toTypedArray()
@@ -122,7 +123,8 @@ class CategoriasActividad : AppCompatActivity() {
                 .setTitle("Seleccionar color")
                 .setItems(nombres) { _, posicion ->
                     colorSeleccionado = coloresCategoria[posicion].second
-                    botonColor.text = "Color: ${coloresCategoria[posicion].first}"
+                    botonColor.text =
+                        "Elegir color: ${coloresCategoria[posicion].first}"
                 }
                 .show()
         }
@@ -201,12 +203,13 @@ class CategoriasActividad : AppCompatActivity() {
         var colorSeleccionado = categoria.color
 
         val botonColor = Button(this)
+        botonColor.isAllCaps = false
 
         val nombreColor = coloresCategoria.firstOrNull {
             it.second.equals(colorSeleccionado, ignoreCase = true)
         }?.first ?: "Actual"
 
-        botonColor.text = "Color: $nombreColor"
+        botonColor.text = "Elegir color: $nombreColor"
 
 
         botonColor.setOnClickListener {
@@ -216,7 +219,8 @@ class CategoriasActividad : AppCompatActivity() {
                 .setTitle("Seleccionar color")
                 .setItems(nombres) { _, posicion ->
                     colorSeleccionado = coloresCategoria[posicion].second
-                    botonColor.text = "Color: ${coloresCategoria[posicion].first}"
+                    botonColor.text =
+                        "Elegir color: ${coloresCategoria[posicion].first}"
                 }
                 .show()
         }

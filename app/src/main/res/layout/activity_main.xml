@@ -61,7 +61,7 @@
                 android:layout_height="64dp"
                 android:layout_marginEnd="6dp"
                 android:layout_weight="1"
-                android:text="＋ Nueva tarea" />
+                android:text="＋ Nueva actividad" />
 
             <Button
                 android:id="@+id/btnHoy"

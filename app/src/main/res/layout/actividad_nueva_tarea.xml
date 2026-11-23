@@ -37,7 +37,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:text="Nueva tarea"
+                android:text="Nueva actividad"
                 android:textAppearance="@style/TextAppearance.OrganizaMe.ScreenTitle" />
 
             <TextView
@@ -199,7 +199,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="58dp"
                 android:layout_marginTop="18dp"
-                android:text="Guardar tarea" />
+                android:text="Guardar actividad" />
         </LinearLayout>
     </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>
