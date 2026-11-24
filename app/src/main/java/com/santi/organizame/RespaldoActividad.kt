@@ -96,7 +96,12 @@ class RespaldoActividad : AppCompatActivity() {
                         "y ${datos.categorias.size} categorías. ¿Querés continuar?"
             )
             .setPositiveButton("Importar") { _, _ -> importar(datos) }
-            .setNegativeButton("Cancelar", null)
+            .setNegativeButton("Cancelar") { _, _ ->
+                mostrarEstado("Importación cancelada.")
+            }
+            .setOnCancelListener {
+                mostrarEstado("Importación cancelada.")
+            }
             .show()
     }
 
