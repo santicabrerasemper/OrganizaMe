@@ -5,6 +5,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.AnticipacionRecordatorio
@@ -17,23 +20,31 @@ import java.time.ZoneId
 
 class ProgramadorRecordatorios(private val contexto: Context) {
 
+    enum class ResultadoProgramacion {
+        EXACTO,
+        APROXIMADO,
+        NO_PROGRAMADO
+    }
+
     private val administrador =
         contexto.getSystemService(Context.ALARM_SERVICE) as AlarmManager
 
-    fun programar(actividad: Actividad) {
+    fun programar(actividad: Actividad): ResultadoProgramacion {
         cancelar(actividad.id)
 
-        if (actividad.estadoTarea == EstadoTarea.COMPLETADA) return
+        if (actividad.estadoTarea == EstadoTarea.COMPLETADA) {
+            return ResultadoProgramacion.NO_PROGRAMADO
+        }
 
         val momentoAviso = calcularMomentoAviso(
             actividad.fecha,
             actividad.hora,
             actividad.recordatorio
-        ) ?: return
+        ) ?: return ResultadoProgramacion.NO_PROGRAMADO
 
         if (!momentoAviso.isAfter(Instant.now())) {
             Log.d("OrganizaMeAvisos", "La hora del recordatorio ya pasó")
-            return
+            return ResultadoProgramacion.NO_PROGRAMADO
         }
 
         val intent = Intent(contexto, ReceptorRecordatorio::class.java).apply {
@@ -51,12 +62,58 @@ class ProgramadorRecordatorios(private val contexto: Context) {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        administrador.setAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            momentoAviso.toEpochMilli(),
-            pendiente
+        val resultado = if (puedeProgramarAlarmasExactas()) {
+            administrador.setExactAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                momentoAviso.toEpochMilli(),
+                pendiente
+            )
+            ResultadoProgramacion.EXACTO
+        } else {
+            administrador.setAndAllowWhileIdle(
+                AlarmManager.RTC_WAKEUP,
+                momentoAviso.toEpochMilli(),
+                pendiente
+            )
+            ResultadoProgramacion.APROXIMADO
+        }
+
+        Log.d(
+            "OrganizaMeAvisos",
+            "Recordatorio programado (${resultado.name.lowercase()}): ${actividad.titulo}"
         )
-        Log.d("OrganizaMeAvisos", "Recordatorio programado: ${actividad.titulo}")
+        return resultado
+    }
+
+    fun puedeProgramarAlarmasExactas(): Boolean =
+        debeUsarAlarmaExacta(
+            sdkInt = Build.VERSION.SDK_INT,
+            permisoConcedido = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+                administrador.canScheduleExactAlarms()
+        )
+
+    fun solicitarAccesoAlarmasExactas(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+            administrador.canScheduleExactAlarms()
+        ) {
+            return false
+        }
+
+        val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+            data = Uri.parse("package:${contexto.packageName}")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+
+        return runCatching {
+            contexto.startActivity(intent)
+            true
+        }.onFailure { error ->
+            Log.e(
+                "OrganizaMeAvisos",
+                "No se pudo abrir la configuración de alarmas exactas",
+                error
+            )
+        }.getOrDefault(false)
     }
 
     fun cancelar(id: Long) {
@@ -79,6 +136,11 @@ class ProgramadorRecordatorios(private val contexto: Context) {
     }
 
     companion object {
+        fun debeUsarAlarmaExacta(
+            sdkInt: Int,
+            permisoConcedido: Boolean
+        ): Boolean = sdkInt < Build.VERSION_CODES.S || permisoConcedido
+
         fun calcularMomentoAviso(
             fecha: LocalDate?,
             hora: LocalTime?,

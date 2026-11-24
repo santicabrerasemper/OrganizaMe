@@ -486,8 +486,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                                     id = idGuardado
                                 )
 
-                                ProgramadorRecordatorios(applicationContext)
-                                    .programar(actividadGuardada)
+                                programarRecordatorio(actividadGuardada)
 
                                 setResult(RESULT_OK)
                                 finish()
@@ -551,8 +550,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                         resultado
                             .onSuccess {
 
-                                ProgramadorRecordatorios(applicationContext)
-                                    .programar(actividadActualizada)
+                                programarRecordatorio(actividadActualizada)
 
                                 setResult(RESULT_OK)
                                 finish()
@@ -569,6 +567,20 @@ class NuevaTareaActividad : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun programarRecordatorio(actividad: Actividad) {
+        val programador = ProgramadorRecordatorios(applicationContext)
+        val resultado = programador.programar(actividad)
+
+        if (resultado == ProgramadorRecordatorios.ResultadoProgramacion.APROXIMADO) {
+            Toast.makeText(
+                this,
+                "Permití alarmas exactas para recibir el recordatorio a la hora indicada",
+                Toast.LENGTH_LONG
+            ).show()
+            programador.solicitarAccesoAlarmasExactas()
         }
     }
 

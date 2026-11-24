@@ -70,4 +70,37 @@ class ProgramadorRecordatoriosTest {
             )
         )
     }
+
+    @Test
+    fun usaAlarmaExactaSinPermisoEspecialAntesDeAndroid12() {
+        assertEquals(
+            true,
+            ProgramadorRecordatorios.debeUsarAlarmaExacta(
+                sdkInt = 30,
+                permisoConcedido = false
+            )
+        )
+    }
+
+    @Test
+    fun usaAlarmaExactaConPermisoEnAndroid12OSuperior() {
+        assertEquals(
+            true,
+            ProgramadorRecordatorios.debeUsarAlarmaExacta(
+                sdkInt = 31,
+                permisoConcedido = true
+            )
+        )
+    }
+
+    @Test
+    fun usaAlternativaAproximadaSinPermisoEnAndroid12OSuperior() {
+        assertEquals(
+            false,
+            ProgramadorRecordatorios.debeUsarAlarmaExacta(
+                sdkInt = 31,
+                permisoConcedido = false
+            )
+        )
+    }
 }
