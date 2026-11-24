@@ -22,9 +22,7 @@ import com.santi.organizame.modelo.EstadoTarea
 import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.TipoActividad
 import java.time.Instant
-import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import android.widget.EditText
 import androidx.core.widget.doAfterTextChanged
@@ -33,8 +31,12 @@ import android.widget.ArrayAdapter
 import android.widget.AdapterView
 import com.santi.organizame.modelo.Categoria
 import com.santi.organizame.modelo.Prioridad
+import com.santi.organizame.modelo.Recurrencia
+import com.santi.organizame.modelo.GeneradorRecurrencia
 import com.santi.organizame.filtros.CriteriosFiltroActividad
 import com.santi.organizame.filtros.FiltroActividades
+import com.santi.organizame.filtros.OrdenActividad
+import com.santi.organizame.filtros.OrdenadorActividades
 class ListaActividadesActividad : AppCompatActivity() {
 
     private lateinit var repositorio: ActividadRepository
@@ -179,6 +181,16 @@ class ListaActividadesActividad : AppCompatActivity() {
             listOf("Todos los tipos", "Tareas", "Eventos")
         )
 
+        prepararFiltro(
+            R.id.ordenActividades,
+            listOf(
+                "Ordenar por fecha y hora",
+                "Ordenar por prioridad",
+                "Ordenar por título",
+                "Más recientes primero"
+            )
+        )
+
         val filtroCategoria = findViewById<Spinner>(R.id.filtroCategoria)
 
         filtroCategoria.onItemSelectedListener =
@@ -201,6 +213,7 @@ class ListaActividadesActividad : AppCompatActivity() {
             findViewById<Spinner>(R.id.filtroEstado).setSelection(0)
             findViewById<Spinner>(R.id.filtroPrioridad).setSelection(0)
             findViewById<Spinner>(R.id.filtroTipo).setSelection(0)
+            findViewById<Spinner>(R.id.ordenActividades).setSelection(0)
             findViewById<EditText>(R.id.buscarTitulo).text.clear()
 
             seccionesAbiertas.clear()
@@ -347,6 +360,10 @@ class ListaActividadesActividad : AppCompatActivity() {
         val posicionTipo =
             findViewById<Spinner>(R.id.filtroTipo).selectedItemPosition
 
+        val ordenSeleccionado = OrdenActividad.values()[
+            findViewById<Spinner>(R.id.ordenActividades).selectedItemPosition
+        ]
+
         val criterios = CriteriosFiltroActividad(
             texto = busqueda,
             categoriaId = if (posicionCategoria >= 2) {
@@ -380,41 +397,28 @@ class ListaActividadesActividad : AppCompatActivity() {
 
         val ahora = LocalDateTime.now()
 
-        // Ordenar las actividades por fecha y hora
-        val ordenFecha = compareBy<Actividad> {
-            it.fecha ?: LocalDate.MAX
-        }.thenBy {
-            it.hora ?: LocalTime.MAX
-        }
-
         // Tareas pendientes que no están vencidas
-        val pendientes = actividades.filter {
+        val pendientes = OrdenadorActividades.ordenar(actividades.filter {
             it.tipo == TipoActividad.TAREA &&
                     it.estadoTarea == EstadoTarea.PENDIENTE &&
                     !estaVencida(it, ahora)
-        }.sortedWith(ordenFecha)
+        }, ordenSeleccionado)
 
         // Tareas vencidas
-        val vencidas = actividades.filter {
+        val vencidas = OrdenadorActividades.ordenar(actividades.filter {
             estaVencida(it, ahora)
-        }.sortedWith(
-            compareByDescending<Actividad> {
-                it.fecha ?: LocalDate.MIN
-            }
-        )
+        }, ordenSeleccionado)
 
         // Tareas completadas
-        val completadas = actividades.filter {
+        val completadas = OrdenadorActividades.ordenar(actividades.filter {
             it.tipo == TipoActividad.TAREA &&
                     it.estadoTarea == EstadoTarea.COMPLETADA
-        }.sortedByDescending {
-            it.fechaCompletada
-        }
+        }, ordenSeleccionado)
 
         // Eventos
-        val eventos = actividades.filter {
+        val eventos = OrdenadorActividades.ordenar(actividades.filter {
             it.tipo == TipoActividad.EVENTO
-        }.sortedWith(ordenFecha)
+        }, ordenSeleccionado)
 
         val listas = listOf(
             pendientes,
@@ -503,12 +507,17 @@ class ListaActividadesActividad : AppCompatActivity() {
 
         val momento = Instant.now()
         val completar = actividad.estadoTarea == EstadoTarea.PENDIENTE
+        val crearSiguiente = completar &&
+                actividad.recurrencia != Recurrencia.SIN_REPETICION &&
+                !actividad.recurrenciaProcesada &&
+                actividad.fecha != null
 
         val actualizada = if (completar) {
             actividad.copy(
                 estadoTarea = EstadoTarea.COMPLETADA,
                 fechaCompletada = momento,
                 fechaRecordatorioProgramado = null,
+                recurrenciaProcesada = actividad.recurrenciaProcesada || crearSiguiente,
                 fechaModificacion = momento
             )
         } else {
@@ -538,7 +547,11 @@ class ListaActividadesActividad : AppCompatActivity() {
                             programador.programar(actualizada)
                         }
 
-                        cargarActividades()
+                        if (crearSiguiente) {
+                            crearSiguienteRecurrencia(actualizada, momento)
+                        } else {
+                            cargarActividades()
+                        }
                     }
                     .onFailure {
                         Toast.makeText(
@@ -547,6 +560,49 @@ class ListaActividadesActividad : AppCompatActivity() {
                             Toast.LENGTH_LONG
                         ).show()
                     }
+            }
+        }
+    }
+
+    private fun crearSiguienteRecurrencia(
+        actividad: Actividad,
+        momento: Instant
+    ) {
+        val siguienteBase = GeneradorRecurrencia.crearSiguiente(
+            actividadCompletada = actividad,
+            momento = momento
+        ) ?: return cargarActividades()
+
+        val siguienteRecordatorio = ProgramadorRecordatorios.calcularMomentoAviso(
+            siguienteBase.fecha,
+            siguienteBase.hora,
+            siguienteBase.recordatorio
+        )?.takeIf { it.isAfter(momento) }
+
+        val siguiente = siguienteBase.copy(
+            fechaRecordatorioProgramado = siguienteRecordatorio
+        )
+
+        repositorio.guardar(siguiente) { resultado ->
+            runOnUiThread {
+                resultado
+                    .onSuccess { nuevoId ->
+                        ProgramadorRecordatorios(applicationContext)
+                            .programar(siguiente.copy(id = nuevoId))
+                        Toast.makeText(
+                            this,
+                            "Se creó la próxima tarea repetitiva",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                    .onFailure {
+                        Toast.makeText(
+                            this,
+                            "La tarea se completó, pero no se pudo crear la siguiente",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                cargarActividades()
             }
         }
     }
@@ -646,6 +702,10 @@ class ListaActividadesActividad : AppCompatActivity() {
                         (actividad.recordatorio?.name?.replace("_", " ")
                             ?: "Sin recordatorio")
             )
+
+            if (actividad.recurrencia != Recurrencia.SIN_REPETICION) {
+                append("\nRepetición: ${nombreRecurrencia(actividad.recurrencia)}")
+            }
         }
 
         AlertDialog.Builder(this)
@@ -654,6 +714,14 @@ class ListaActividadesActividad : AppCompatActivity() {
             .setPositiveButton("Cerrar", null)
             .show()
     }
+
+    private fun nombreRecurrencia(recurrencia: Recurrencia): String =
+        when (recurrencia) {
+            Recurrencia.SIN_REPETICION -> "No repetir"
+            Recurrencia.DIARIA -> "Diaria"
+            Recurrencia.SEMANAL -> "Semanal"
+            Recurrencia.MENSUAL -> "Mensual"
+        }
 }
 
 

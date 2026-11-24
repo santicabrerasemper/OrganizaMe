@@ -2,6 +2,7 @@ package com.santi.organizame.modelo
 
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import androidx.room.Delete
@@ -11,6 +12,9 @@ interface ActividadDao {
 
     @Insert
     fun insertar(actividad: Actividad): Long
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertarTodas(actividades: List<Actividad>)
 
     @Update
     fun actualizar(actividad: Actividad)
@@ -36,4 +40,7 @@ interface ActividadDao {
 
     @Query("SELECT * FROM actividades WHERE id = :id LIMIT 1")
     fun obtenerPorId(id: Long): Actividad?
+
+    @Query("DELETE FROM actividades")
+    fun eliminarTodas()
 }

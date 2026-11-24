@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Query
 import androidx.room.Dao
 import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 
 
     @Dao
@@ -12,6 +13,9 @@ import androidx.room.Insert
 
         @Insert
         fun insertar(categoria: Categoria): Long
+
+        @Insert(onConflict = OnConflictStrategy.REPLACE)
+        fun insertarTodas(categorias: List<Categoria>)
 
         @Update
         fun actualizar(categoria: Categoria)
@@ -24,4 +28,7 @@ import androidx.room.Insert
 
         @Query("SELECT * FROM categorias WHERE id = :id LIMIT 1")
         fun obtenerPorId(id: Long): Categoria?
+
+        @Query("DELETE FROM categorias")
+        fun eliminarTodas()
 }

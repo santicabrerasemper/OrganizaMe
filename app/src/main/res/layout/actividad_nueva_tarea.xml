@@ -132,6 +132,8 @@
                     android:hint="Fecha (dd/MM/aaaa)"
                     android:importantForAutofill="no"
                     android:inputType="date"
+                    android:clickable="true"
+                    android:focusable="false"
                     android:singleLine="true" />
 
                 <EditText
@@ -143,7 +145,16 @@
                     android:hint="Hora (HH:mm)"
                     android:importantForAutofill="no"
                     android:inputType="time"
+                    android:clickable="true"
+                    android:focusable="false"
                     android:singleLine="true" />
+
+                <Button
+                    android:id="@+id/btnLimpiarFechaHora"
+                    style="@style/Widget.OrganizaMe.Button.Text"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:text="Limpiar fecha y hora" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -183,6 +194,27 @@
                     style="@style/Widget.OrganizaMe.Spinner"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="Repetición"
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.Label" />
+
+                <Spinner
+                    android:id="@+id/recurrenciaTarea"
+                    style="@style/Widget.OrganizaMe.Spinner"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/ayudaRecurrencia"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:text="Al completar una tarea repetitiva se creará automáticamente la siguiente."
+                    android:textAppearance="@style/TextAppearance.OrganizaMe.Body" />
 
                 <TextView
                     android:layout_width="match_parent"

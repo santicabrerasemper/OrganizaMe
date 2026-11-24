@@ -1,6 +1,8 @@
 package com.santi.organizame
 
 import android.os.Bundle
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.santi.organizame.databinding.ActividadNuevaTareaBinding
 import com.santi.organizame.modelo.Actividad
@@ -8,6 +10,7 @@ import com.santi.organizame.modelo.EstadoTarea
 import com.santi.organizame.modelo.Prioridad
 import com.santi.organizame.modelo.TipoActividad
 import android.widget.ArrayAdapter
+import android.widget.AdapterView
 import com.santi.organizame.modelo.Categoria
 import com.santi.organizame.modelo.AnticipacionRecordatorio
 import java.time.LocalDate
@@ -23,6 +26,7 @@ import androidx.core.view.WindowInsetsCompat
 import com.santi.organizame.modelo.CategoriaRepository
 import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.OrganizaMeDatabase
+import com.santi.organizame.modelo.Recurrencia
 
 class NuevaTareaActividad : AppCompatActivity() {
 
@@ -63,6 +67,8 @@ class NuevaTareaActividad : AppCompatActivity() {
         binding.btnVolverNuevaTarea.setOnClickListener {
             finish()
         }
+
+        configurarSelectoresFechaHora()
 
         val tiposActividad = TipoActividad.values().toList()
 
@@ -196,6 +202,41 @@ class NuevaTareaActividad : AppCompatActivity() {
 
         binding.recordatorioTarea.adapter = adaptadorRecordatorio
 
+        val opcionesRecurrencia = listOf(
+            "No repetir",
+            "Todos los días",
+            "Todas las semanas",
+            "Todos los meses"
+        )
+
+        val adaptadorRecurrencia = ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            opcionesRecurrencia
+        )
+        adaptadorRecurrencia.setDropDownViewResource(
+            android.R.layout.simple_spinner_dropdown_item
+        )
+        binding.recurrenciaTarea.adapter = adaptadorRecurrencia
+
+        binding.tipoActividad.onItemSelectedListener =
+            object : AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    val esTarea = TipoActividad.values()[position] == TipoActividad.TAREA
+                    binding.recurrenciaTarea.isEnabled = esTarea
+                    binding.ayudaRecurrencia.visibility =
+                        if (esTarea) View.VISIBLE else View.GONE
+                    if (!esTarea) binding.recurrenciaTarea.setSelection(0)
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>?) = Unit
+            }
+
         if (intent.hasExtra(EXTRA_PARSER_TEXTO_ORIGINAL)) {
             val textoOriginal = intent.getStringExtra(EXTRA_PARSER_TEXTO_ORIGINAL).orEmpty()
             val advertencias =
@@ -304,6 +345,9 @@ class NuevaTareaActividad : AppCompatActivity() {
                                     }
 
                                 binding.recordatorioTarea.setSelection(posicionRecordatorio)
+                                binding.recurrenciaTarea.setSelection(
+                                    Recurrencia.values().indexOf(actividad.recurrencia)
+                                )
 
                                 binding.btnGuardarTarea.text = "Guardar cambios"
                                 binding.tituloFormulario.text = "Editar actividad"
@@ -332,6 +376,8 @@ class NuevaTareaActividad : AppCompatActivity() {
                 categorias[binding.categoriaTarea.selectedItemPosition]
             val tipoSeleccionado =
                 TipoActividad.values()[binding.tipoActividad.selectedItemPosition]
+            val recurrenciaSeleccionada =
+                Recurrencia.values()[binding.recurrenciaTarea.selectedItemPosition]
             val recordatorioSeleccionado =
                 when (binding.recordatorioTarea.selectedItemPosition) {
 
@@ -352,6 +398,14 @@ class NuevaTareaActividad : AppCompatActivity() {
 
             if(tipoSeleccionado == TipoActividad.EVENTO && fecha.isBlank()){
                 binding.fechaTarea.error = "La fecha es obligatoria para un evento"
+                return@setOnClickListener
+            }
+
+            if (recurrenciaSeleccionada != Recurrencia.SIN_REPETICION &&
+                (tipoSeleccionado != TipoActividad.TAREA || fecha.isBlank())
+            ) {
+                binding.fechaTarea.error =
+                    "Una tarea repetitiva necesita una fecha inicial"
                 return@setOnClickListener
             }
 
@@ -414,6 +468,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                     categoriaId = categoriaSeleccionada?.id,
                     recordatorio = recordatorioSeleccionado,
                     fechaRecordatorioProgramado = momentoRecordatorio,
+                    recurrencia = recurrenciaSeleccionada,
                     estadoTarea =
                         if (tipoSeleccionado == TipoActividad.TAREA) {
                             EstadoTarea.PENDIENTE
@@ -463,6 +518,15 @@ class NuevaTareaActividad : AppCompatActivity() {
                     prioridad = prioridadSeleccionada,
                     categoriaId = categoriaSeleccionada?.id,
                     recordatorio = recordatorioSeleccionado,
+                    recurrencia =
+                        if (esTarea) recurrenciaSeleccionada
+                        else Recurrencia.SIN_REPETICION,
+                    recurrenciaProcesada =
+                        if (actividadOriginal.estadoTarea == EstadoTarea.COMPLETADA) {
+                            actividadOriginal.recurrenciaProcesada
+                        } else {
+                            false
+                        },
                     estadoTarea =
                         if (esTarea) {
                             actividadOriginal.estadoTarea ?: EstadoTarea.PENDIENTE
@@ -505,6 +569,48 @@ class NuevaTareaActividad : AppCompatActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun configurarSelectoresFechaHora() {
+        binding.fechaTarea.setOnClickListener {
+            val inicial = convertirFecha(binding.fechaTarea.text.toString())
+                ?: LocalDate.now()
+            DatePickerDialog(
+                this,
+                { _, anio, mes, dia ->
+                    binding.fechaTarea.setText(
+                        LocalDate.of(anio, mes + 1, dia).format(FORMATO_FECHA)
+                    )
+                    binding.fechaTarea.error = null
+                },
+                inicial.year,
+                inicial.monthValue - 1,
+                inicial.dayOfMonth
+            ).show()
+        }
+
+        binding.horaTarea.setOnClickListener {
+            val inicial = convertirHora(binding.horaTarea.text.toString())
+                ?: LocalTime.now().withSecond(0).withNano(0)
+            TimePickerDialog(
+                this,
+                { _, hora, minuto ->
+                    binding.horaTarea.setText(
+                        LocalTime.of(hora, minuto).format(FORMATO_HORA)
+                    )
+                    binding.horaTarea.error = null
+                },
+                inicial.hour,
+                inicial.minute,
+                true
+            ).show()
+        }
+
+        binding.btnLimpiarFechaHora.setOnClickListener {
+            binding.fechaTarea.text?.clear()
+            binding.horaTarea.text?.clear()
+            binding.recordatorioTarea.setSelection(0)
         }
     }
 

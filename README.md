@@ -11,12 +11,35 @@ El núcleo local del MVP ya incluye:
 - CRUD de tareas, eventos y categorías con Room.
 - Inicio, vista de hoy, listado por secciones y calendario.
 - Búsqueda sin distinguir mayúsculas ni tildes y filtros combinados.
+- Orden configurable por fecha/hora, prioridad, título o creación reciente.
 - Recordatorios locales con notificaciones y reprogramación al reiniciar.
+- Selección visual de fecha y hora mediante calendario y reloj.
+- Tareas recurrentes diarias, semanales o mensuales.
+- Resumen semanal navegable con pendientes, completadas, eventos y vencidas.
+- Exportación e importación de un respaldo local en formato JSON.
 - Parser determinístico con fecha, hora, tipo, prioridad, categoría, descripción y recordatorio.
 - Confirmación editable antes de guardar.
 - Corpus reproducible de 30 frases, pruebas unitarias e integración instrumentada con Room.
 
 La aplicación se encuentra en etapa de integración, pruebas de comportamiento y preparación de la entrega.
+
+## Funciones ampliadas
+
+### Tareas recurrentes
+
+Una tarea puede configurarse para repetirse todos los días, semanas o meses. Al completarla, OrganizaMe conserva la ocurrencia terminada y crea la siguiente con la misma información. Si la fecha original quedó atrasada, calcula la próxima ocurrencia futura y vuelve a programar su recordatorio cuando corresponda.
+
+### Resumen semanal
+
+Desde el inicio se puede consultar la semana actual, anterior o siguiente. La pantalla muestra contadores y agrupa las actividades por día.
+
+### Respaldo local
+
+La pantalla `Respaldo` permite exportar categorías y actividades a un archivo JSON. Al importar, se muestra una confirmación antes de reemplazar los datos locales y luego se reprograman los recordatorios futuros.
+
+### Orden y planificación
+
+El listado permite ordenar por fecha y hora, prioridad, título o fecha de creación. En el formulario, la fecha y la hora se seleccionan con controles nativos para evitar errores de formato.
 
 ## Tecnologías
 
@@ -26,6 +49,7 @@ La aplicación se encuentra en etapa de integración, pruebas de comportamiento 
 - Separación por capas entre pantallas, parser/filtros, repositorios y persistencia
 - Room sobre SQLite
 - AlarmManager para los recordatorios locales
+- Storage Access Framework para exportar e importar respaldos
 - Pruebas unitarias e instrumentadas
 
 ## Gramática rápida del parser

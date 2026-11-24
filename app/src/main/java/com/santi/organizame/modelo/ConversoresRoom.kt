@@ -53,6 +53,12 @@ class ConversoresRoom {
         valor?.let(AnticipacionRecordatorio::valueOf)
 
     @TypeConverter
+    fun recurrenciaAValor(recurrencia: Recurrencia?): String? = recurrencia?.name
+
+    @TypeConverter
+    fun valorARecurrencia(valor: String?): Recurrencia? = valor?.let(Recurrencia::valueOf)
+
+    @TypeConverter
     fun palabrasClaveAValor(palabras: List<String>?): String? =
         palabras?.joinToString(SEPARADOR_PALABRAS)
 

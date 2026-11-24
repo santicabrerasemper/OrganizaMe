@@ -10,6 +10,7 @@ import com.santi.organizame.modelo.EstadoTarea
 import android.view.View
 import java.time.LocalDateTime
 import com.santi.organizame.modelo.TipoActividad
+import com.santi.organizame.modelo.Recurrencia
 import androidx.core.content.ContextCompat
 import android.text.SpannableString
 import android.text.Spanned
@@ -135,6 +136,14 @@ class AdaptadorTarjetasActividad(
             }
 
             append("Prioridad: ${actividad.prioridad}\n")
+
+            if (actividad.recurrencia != Recurrencia.SIN_REPETICION) {
+                append(
+                    "Repetición: " +
+                            actividad.recurrencia.name.lowercase()
+                                .replace('_', ' ') + "\n"
+                )
+            }
 
             actividad.estadoTarea?.let {
                 append("Estado: $it")

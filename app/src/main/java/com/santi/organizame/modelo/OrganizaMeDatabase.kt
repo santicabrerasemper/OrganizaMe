@@ -4,11 +4,12 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Actividad::class, Categoria::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class OrganizaMeDatabase : RoomDatabase() {
@@ -27,6 +28,7 @@ abstract class OrganizaMeDatabase : RoomDatabase() {
                     OrganizaMeDatabase::class.java,
                     "organizame.db"
                 )
+                    .addMigrations(MIGRACION_1_2)
                     .addCallback(object : RoomDatabase.Callback() {
                         override fun onCreate(db: SupportSQLiteDatabase) {
                             super.onCreate(db)
@@ -48,5 +50,18 @@ abstract class OrganizaMeDatabase : RoomDatabase() {
                     .build()
                     .also { instancia = it }
             }
+
+        val MIGRACION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "ALTER TABLE actividades ADD COLUMN recurrencia " +
+                            "TEXT NOT NULL DEFAULT 'SIN_REPETICION'"
+                )
+                db.execSQL(
+                    "ALTER TABLE actividades ADD COLUMN recurrenciaProcesada " +
+                            "INTEGER NOT NULL DEFAULT 0"
+                )
+            }
+        }
     }
 }

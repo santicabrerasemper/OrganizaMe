@@ -40,4 +40,14 @@ class ConversoresRoomTest {
             conversores.valorAPalabrasClave(conversores.palabrasClaveAValor(palabras))
         )
     }
+
+    @Test
+    fun convierteRecurrenciaSinPerderInformacion() {
+        assertEquals(
+            Recurrencia.SEMANAL,
+            conversores.valorARecurrencia(
+                conversores.recurrenciaAValor(Recurrencia.SEMANAL)
+            )
+        )
+    }
 }

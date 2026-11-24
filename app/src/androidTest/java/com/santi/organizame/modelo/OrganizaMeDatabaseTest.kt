@@ -62,6 +62,7 @@ class OrganizaMeDatabaseTest {
             estadoTarea = EstadoTarea.PENDIENTE,
             recordatorio = AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES,
             fechaRecordatorioProgramado = fechaRecordatorio,
+            recurrencia = Recurrencia.SEMANAL,
             fechaCreacion = fechaCreacion,
             fechaModificacion = fechaCreacion
         )

@@ -43,6 +43,9 @@ data class Actividad(
     val recordatorio: AnticipacionRecordatorio? = null,
     val fechaRecordatorioProgramado: Instant? = null,
 
+    val recurrencia: Recurrencia = Recurrencia.SIN_REPETICION,
+    val recurrenciaProcesada: Boolean = false,
+
     val fechaCreacion: Instant = Instant.now(),
     val fechaModificacion: Instant = Instant.now()
 )

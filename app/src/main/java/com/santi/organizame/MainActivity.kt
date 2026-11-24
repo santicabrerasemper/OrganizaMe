@@ -104,6 +104,14 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        binding.btnResumenSemanal.setOnClickListener {
+            startActivity(Intent(this, ResumenSemanalActividad::class.java))
+        }
+
+        binding.btnRespaldo.setOnClickListener {
+            startActivity(Intent(this, RespaldoActividad::class.java))
+        }
+
         // Abrir detalles si llegó desde un recordatorio
         procesarIntentRecordatorio(intent)
     }

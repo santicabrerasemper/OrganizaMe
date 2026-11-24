@@ -48,6 +48,12 @@
         <activity
             android:name=".HoyActividad"
             android:exported="false" />
+        <activity
+            android:name=".ResumenSemanalActividad"
+            android:exported="false" />
+        <activity
+            android:name=".RespaldoActividad"
+            android:exported="false" />
 
         <activity
             android:name=".ListaActividadesActividad"
