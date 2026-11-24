@@ -24,7 +24,7 @@ class CategoriasActividad : AppCompatActivity() {
     private lateinit var adaptador: AdaptadorTarjetasCategoria
     private lateinit var textoEstado: TextView
     private val coloresCategoria = listOf(
-        "Verde OrganizaMe" to "#0F766E",
+        "Verde" to "#0F766E",
         "Azul" to "#2563EB",
         "Verde oscuro" to "#134E4A",
         "Ámbar" to "#A16207",
@@ -114,7 +114,7 @@ class CategoriasActividad : AppCompatActivity() {
 
         val botonColor = Button(this)
         botonColor.isAllCaps = false
-        botonColor.text = "Elegir color: Verde OrganizaMe"
+        botonColor.text = "Elegir color: Verde"
 
         botonColor.setOnClickListener {
             val nombres = coloresCategoria.map { it.first }.toTypedArray()
