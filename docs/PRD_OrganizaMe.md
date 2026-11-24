@@ -1,21 +1,21 @@
 # PRD — OrganizaMe
 
 **Producto:** OrganizaMe  
-**Versión del documento:** 1.1
-**Estado:** En implementación
+**Versión del documento:** 1.2
+**Estado:** MVP funcional validado / preparación de entrega
 **Plataforma:** Android nativo  
 **Tipo de entrega:** Prototipo académico / proyecto final  
-**Fecha de actualización:** 23 de noviembre de 2026
+**Fecha de actualización:** 24 de noviembre de 2026
 
 ---
 
 ## 1. Resumen ejecutivo
 
-OrganizaMe es una aplicación Android de uso individual para registrar, consultar y administrar tareas y eventos personales desde un único lugar. Permitirá asignar fecha, hora, prioridad, categoría y recordatorio; consultar las actividades en una agenda diaria o un calendario mensual; y recibir notificaciones locales.
+OrganizaMe es una aplicación Android de uso individual para registrar, consultar y administrar tareas y eventos personales desde un único lugar. Permite asignar fecha, hora, prioridad, categoría y recordatorio; consultar las actividades en una agenda diaria, un calendario mensual o un resumen semanal; configurar tareas recurrentes; y recibir notificaciones locales.
 
-El diferencial del producto será una carga rápida mediante texto en español. Un parser determinístico, basado en reglas y expresiones regulares, transformará instrucciones acotadas —por ejemplo, “estudiar mañana a las 18 prioridad alta”— en campos estructurados. La aplicación nunca guardará automáticamente lo interpretado: antes de crear la actividad mostrará una pantalla de confirmación con todos los campos editables y advertirá cuando un dato sea ambiguo o no haya podido interpretarse.
+El diferencial del producto es una carga rápida mediante texto en español. Un parser determinístico, basado en reglas y expresiones regulares, transforma instrucciones acotadas —por ejemplo, “estudiar mañana a las 18 prioridad alta”— en campos estructurados. La aplicación nunca guarda automáticamente lo interpretado: antes de crear la actividad muestra una pantalla de confirmación con todos los campos editables y advierte cuando un dato es ambiguo o no pudo interpretarse.
 
-El MVP será local, funcionará sin conexión, no requerirá cuenta y estará diseñado para poder demostrar persistencia, arquitectura Android, procesos en segundo plano, notificaciones, pruebas automatizadas y evaluación cuantitativa del parser.
+El MVP es local, funciona sin conexión, no requiere cuenta e incluye persistencia con Room, recordatorios con AlarmManager, respaldo JSON mediante Storage Access Framework, pruebas automatizadas y evaluación cuantitativa reproducible del parser.
 
 ## 2. Problema
 
@@ -43,7 +43,7 @@ Desarrollar y evaluar un prototipo Android offline-first que permita planificar 
 4. Interpretar un conjunto explícito de expresiones temporales, prioridades y categorías en español.
 5. Evitar guardados incorrectos mediante una pantalla de revisión obligatoria.
 6. Medir el comportamiento del parser con un corpus reproducible de al menos 30 frases.
-7. Demostrar separación de responsabilidades mediante una arquitectura MVVM con repositorios y casos de uso.
+7. Demostrar separación de responsabilidades entre Activities, lógica de dominio, parser, repositorios, persistencia y programación de recordatorios.
 
 ### 3.3 Indicadores de éxito del MVP
 
@@ -60,6 +60,19 @@ El MVP se considerará exitoso cuando cumpla todos los siguientes indicadores:
 - No se produce ningún cierre inesperado en el recorrido de demostración acordado.
 
 La precisión del parser se medirá por campo —título, tipo, fecha, hora, prioridad y categoría— y también por coincidencia exacta de la actividad completa. Ambos resultados deberán informarse por separado.
+
+### 3.4 Estado validado al 24/11/2026
+
+| Evidencia | Resultado |
+|---|---:|
+| Pruebas unitarias | 46 aprobadas |
+| Pruebas instrumentadas | 5 aprobadas |
+| Errores de Android Lint | 0 |
+| Corpus del parser | 30 frases |
+| Exactitud por campo y coincidencia exacta del corpus soportado | 100 % |
+| Recorrido end-to-end en Pixel 9a AVD / Android API 36 | Aprobado |
+
+El recorrido end-to-end verificó alta manual y por parser, edición, validaciones, agenda de hoy, calendario, búsqueda sin tildes, filtros combinados, ordenamiento, categorías y palabras clave, notificación real, recurrencia, resumen semanal, exportación e importación JSON y restauración del estado inicial. Durante la prueba se detectó y corrigió el rótulo interno `Verde OrganizaMe`; la interfaz utiliza ahora el nombre neutro `Verde`.
 
 ## 4. Alcance
 
@@ -80,6 +93,11 @@ La precisión del parser se medirá por campo —título, tipo, fecha, hora, pri
 - Datos de demostración reproducibles.
 - Corpus y reporte de evaluación del parser.
 - Pruebas unitarias de dominio/parser y pruebas de los flujos críticos.
+- Orden configurable por fecha/hora, prioridad, título o creación reciente.
+- Selección de fecha y hora mediante controles nativos de Android.
+- Tareas recurrentes diarias, semanales o mensuales.
+- Resumen semanal navegable con pendientes, completadas, eventos y vencidas.
+- Exportación e importación de respaldos locales en formato JSON.
 
 ### 4.2 Fuera de alcance
 
@@ -91,17 +109,17 @@ La precisión del parser se medirá por campo —título, tipo, fecha, hora, pri
 - Integración con Google Calendar, Outlook u otros calendarios.
 - Aplicación web, versión iOS o widgets.
 - Ubicación, contactos o archivos adjuntos.
-- Reglas complejas de recurrencia.
+- Reglas avanzadas de recurrencia —días hábiles, excepciones o patrones personalizados—.
 - Respaldo en la nube.
 - Validación comercial o de mercado.
 
 ### 4.3 Extensiones posteriores al MVP
 
-- Tareas recurrentes con reglas simples.
-- Exportación e importación de un respaldo local.
-- Resumen semanal de pendientes.
 - Fecha y hora de finalización para eventos.
 - Preferencias avanzadas de notificación.
+- Tema oscuro y opciones adicionales de accesibilidad.
+- Widgets de inicio y acciones rápidas del sistema.
+- Sincronización opcional entre dispositivos o respaldo en la nube.
 
 ## 5. Usuarios y contexto de uso
 
@@ -176,6 +194,24 @@ Persona que necesita organizar estudio, trabajo y actividades personales desde s
 - La eliminación es definitiva dentro del MVP.
 - La cancelación del recordatorio forma parte de la misma operación lógica.
 
+### 6.8 Recurrencia
+
+- Solo las tareas pueden configurarse como recurrentes.
+- Las frecuencias disponibles son diaria, semanal y mensual.
+- Una tarea recurrente requiere una fecha inicial.
+- Al completarla, se conserva la ocurrencia finalizada y se crea una única ocurrencia futura con la misma información.
+- Si la fecha original quedó atrasada, la aplicación avanza tantas recurrencias como sean necesarias hasta obtener una fecha futura.
+- Reabrir y volver a completar una ocurrencia ya procesada no debe generar duplicados.
+- La nueva ocurrencia vuelve a programar su recordatorio únicamente si el instante calculado es futuro.
+
+### 6.9 Respaldo local
+
+- La exportación genera un archivo JSON versionado con todas las categorías y actividades.
+- El usuario elige el destino mediante Storage Access Framework; la aplicación no requiere permisos amplios de almacenamiento.
+- Antes de importar se valida la estructura y se informa cuántas actividades y categorías reemplazarán a los datos actuales.
+- La importación requiere confirmación explícita, reemplaza los datos dentro de una transacción y reprograma los recordatorios futuros.
+- Cancelar la importación no modifica los datos y deja un estado visible coherente.
+
 ## 7. Experiencia y navegación
 
 ### 7.1 Navegación principal
@@ -188,6 +224,8 @@ La aplicación parte de un **Inicio** que concentra los accesos principales:
 4. **Nueva actividad:** formulario manual o confirmación de una frase interpretada.
 5. **Categorías:** administración de nombres, colores y palabras clave.
 6. **Ayuda:** ejemplos, gramática soportada y limitaciones del parser.
+7. **Resumen semanal:** navegación por semana, contadores y actividades agrupadas por día.
+8. **Respaldo:** exportación e importación de una copia local en JSON.
 
 ### 7.2 Pantallas mínimas
 
@@ -200,6 +238,8 @@ La aplicación parte de un **Inicio** que concentra los accesos principales:
 - Búsqueda y filtros.
 - Gestión de categorías.
 - Ayuda del parser con ejemplos y limitaciones.
+- Resumen semanal.
+- Exportación e importación de respaldo.
 
 ### 7.3 Estados de interfaz obligatorios
 
@@ -240,7 +280,7 @@ OrganizaMe debe transmitir calma, claridad y confianza. La interfaz utiliza espa
 | Advertencia | `#A16207` / `#FEF3C7` | Revisiones del parser. |
 | Error | `#B91C1C` / `#FEE2E2` | Actividades vencidas y acciones destructivas. |
 
-Los colores disponibles para categorías son verde OrganizaMe (`#0F766E`), azul (`#2563EB`), verde oscuro (`#134E4A`), ámbar (`#A16207`) y violeta (`#7C3AED`). Los estados nunca deben comunicarse únicamente mediante color: también deben incluir texto, icono o etiqueta.
+Los colores disponibles para categorías son verde (`#0F766E`), azul (`#2563EB`), verde oscuro (`#134E4A`), ámbar (`#A16207`) y violeta (`#7C3AED`). Los estados nunca deben comunicarse únicamente mediante color: también deben incluir texto, icono o etiqueta.
 
 #### Reglas de componentes
 
@@ -299,6 +339,31 @@ Los colores disponibles para categorías son verde OrganizaMe (`#0F766E`), azul 
 3. Al confirmar, cancela el recordatorio asociado.
 4. Elimina el registro y actualiza todas las vistas.
 
+### 8.6 Completar una tarea recurrente
+
+1. El usuario completa una tarea con repetición configurada.
+2. La aplicación marca la ocurrencia actual como completada y cancela su recordatorio.
+3. Calcula la próxima fecha válida futura.
+4. Crea una nueva ocurrencia pendiente con los mismos datos y la nueva fecha.
+5. Programa su recordatorio futuro, si corresponde.
+6. Actualiza listados, calendario y resumen semanal sin duplicar ocurrencias.
+
+### 8.7 Consultar el resumen semanal
+
+1. El usuario abre “Resumen semanal”.
+2. La aplicación muestra el rango lunes-domingo, contadores y actividades por día.
+3. El usuario puede navegar a la semana anterior, actual o siguiente.
+4. Una semana vacía muestra un estado específico y contadores en cero.
+
+### 8.8 Exportar e importar un respaldo
+
+1. El usuario exporta un respaldo y elige el destino del archivo JSON.
+2. La aplicación informa las cantidades exportadas.
+3. Para recuperar datos, el usuario selecciona un archivo compatible.
+4. La aplicación valida el archivo y muestra las cantidades que reemplazarán los datos actuales.
+5. Al confirmar, reemplaza los datos en una transacción y reprograma recordatorios futuros.
+6. Al cancelar, no modifica los datos.
+
 ## 9. Requisitos funcionales
 
 ### 9.1 Actividades
@@ -313,6 +378,8 @@ Los colores disponibles para categorías son verde OrganizaMe (`#0F766E`), azul 
 | RF-A06 | Marcar una tarea como completada y volver a abrirla. | P0 |
 | RF-A07 | Validar relaciones entre fecha, hora y recordatorio antes de guardar. | P0 |
 | RF-A08 | Persistir los cambios entre cierres y reinicios de la aplicación. | P0 |
+| RF-A09 | Configurar una tarea con recurrencia diaria, semanal o mensual. | P0 |
+| RF-A10 | Crear una única ocurrencia futura al completar una tarea recurrente. | P0 |
 
 ### 9.2 Agenda, calendario, búsqueda y filtros
 
@@ -325,8 +392,9 @@ Los colores disponibles para categorías son verde OrganizaMe (`#0F766E`), azul 
 | RF-V05 | Buscar por coincidencia parcial del título o descripción, sin distinguir mayúsculas ni tildes. | P0 |
 | RF-V06 | Filtrar por tipo, estado, categoría y prioridad. | P0 |
 | RF-V07 | Combinar filtros usando condición AND. | P0 |
-| RF-V08 | Permitir ordenar por fecha/hora o prioridad. | P1 |
+| RF-V08 | Permitir ordenar por fecha/hora, prioridad, título o creación reciente. | P0 |
 | RF-V09 | Los filtros solo afectan la visualización y no modifican datos. | P0 |
+| RF-V10 | Mostrar un resumen semanal navegable con pendientes, completadas, eventos y vencidas. | P0 |
 
 Orden predeterminado: fecha ascendente, hora ascendente, prioridad descendente y título ascendente como desempate. Las actividades sin hora aparecen después de las actividades con hora del mismo día.
 
@@ -370,6 +438,17 @@ Orden predeterminado: fecha ascendente, hora ascendente, prioridad descendente y
 | RF-P11 | Mostrar siempre una pantalla editable de confirmación. | P0 |
 | RF-P12 | No guardar ninguna actividad desde el parser sin acción explícita del usuario. | P0 |
 | RF-P13 | Conservar la frase original para mostrarla durante la revisión, sin obligación de persistirla después. | P1 |
+
+### 9.6 Respaldo local
+
+| ID | Requisito | Prioridad |
+|---|---|---|
+| RF-B01 | Exportar categorías y actividades a un archivo JSON versionado. | P0 |
+| RF-B02 | Permitir que el usuario elija destino y origen mediante Storage Access Framework. | P0 |
+| RF-B03 | Validar el archivo y mostrar cantidades antes de importar. | P0 |
+| RF-B04 | Solicitar confirmación antes de reemplazar los datos locales. | P0 |
+| RF-B05 | Reemplazar los datos en una transacción y reprogramar recordatorios futuros. | P0 |
+| RF-B06 | Cancelar una importación sin modificar la información actual. | P0 |
 
 ## 10. Especificación del parser
 
@@ -542,6 +621,41 @@ Criterios:
 - Una consulta sin coincidencias muestra un estado vacío específico.
 - Quitar filtros restaura el conjunto completo sin modificar datos.
 
+### HU-08 — Repetir una tarea
+
+**Como** usuario, **quiero** configurar una tarea recurrente **para** no volver a cargarla manualmente.
+
+Criterios:
+
+- La tarea permite seleccionar repetición diaria, semanal o mensual.
+- Una recurrencia sin fecha inicial no puede guardarse.
+- Al completar una ocurrencia se crea una única tarea pendiente con fecha futura.
+- La ocurrencia completada se conserva y la nueva hereda sus datos.
+- Reabrir y volver a completar la misma ocurrencia no genera duplicados.
+
+### HU-09 — Consultar la semana
+
+**Como** usuario, **quiero** ver un resumen semanal **para** entender rápidamente mi carga de actividades.
+
+Criterios:
+
+- Se muestra el rango lunes-domingo y los contadores de pendientes, completadas, eventos y vencidas.
+- Las actividades se agrupan por día.
+- Es posible navegar a la semana anterior, actual y siguiente.
+- Una semana sin actividades muestra contadores en cero y un estado vacío.
+
+### HU-10 — Respaldar y recuperar datos
+
+**Como** usuario, **quiero** exportar e importar mis datos **para** conservar una copia local recuperable.
+
+Criterios:
+
+- La exportación crea un JSON válido con actividades y categorías.
+- La aplicación informa las cantidades exportadas.
+- Un archivo inválido no reemplaza los datos actuales.
+- Antes de importar se muestran las cantidades y se solicita confirmación.
+- Cancelar conserva los datos; confirmar reemplaza el contenido y reprograma recordatorios futuros.
+
 ## 12. Modelo de datos conceptual
 
 ### Activity
@@ -560,6 +674,8 @@ Criterios:
 | completedAt | Instant? | Solo cuando la tarea está completada. |
 | reminderOffset | Enum? | Requiere fecha y hora. |
 | reminderScheduledAt | Instant? | Instante calculado. |
+| recurrence | NONE / DAILY / WEEKLY / MONTHLY | Solo para tareas; sin repetición por defecto. |
+| recurrenceProcessed | Boolean | Evita crear dos veces la siguiente ocurrencia. |
 | createdAt | Instant | Auditoría local. |
 | updatedAt | Instant | Auditoría local. |
 
@@ -576,36 +692,36 @@ Las palabras clave pueden almacenarse en una tabla relacionada o mediante un con
 
 ## 13. Arquitectura y restricciones técnicas
 
-### 13.1 Stack propuesto
+### 13.1 Stack implementado
 
-- Kotlin.
-- Android nativo con Activities/Fragments y layouts XML, de acuerdo con la propuesta académica.
-- MVVM para presentación.
-- Casos de uso para reglas de negocio.
-- Repositorios como límite entre dominio y fuentes de datos.
-- Room sobre SQLite para persistencia local.
-- WorkManager para trabajo diferible y AlarmManager cuando se requiera una alarma puntual.
-- API de fecha/hora de Java/Kotlin y expresiones regulares para el parser.
-- Pruebas unitarias con el framework adoptado por la cátedra/equipo y pruebas instrumentadas para integración Android.
+- Kotlin y Java 11.
+- Android nativo con Activities, View Binding y layouts XML.
+- Repositorios como límite entre UI, dominio y persistencia.
+- Room 2.8.5 sobre SQLite, con migración versionada del esquema.
+- AlarmManager y BroadcastReceiver para recordatorios y reprogramación tras reinicio o actualización.
+- Storage Access Framework para crear y abrir respaldos sin permisos amplios de almacenamiento.
+- API `java.time`, reglas determinísticas y expresiones regulares para el parser.
+- JUnit 4 para pruebas unitarias y AndroidX Test/Room Testing para pruebas instrumentadas.
 
 ### 13.2 Separación mínima de componentes
 
 ```text
-UI (Fragments / ViewModels)
+Activities / View Binding
         ↓
-Casos de uso
-        ↓
-Repositorio de actividades ── Room
-        ├───────────────────── Programador de recordatorios
-        └───────────────────── Parser (servicio de dominio puro)
+Repositorios ─────────────── Room
+        ├─────────────────── Programador de recordatorios / receptores
+        ├─────────────────── Respaldo JSON / Storage Access Framework
+        └─────────────────── Dominio puro: parser, filtros, orden, recurrencia y resumen
 ```
 
 El parser no debe depender de Android ni de la base de datos. Debe recibir fecha/hora base y categorías mediante parámetros para que sus pruebas sean determinísticas.
 
 ### 13.3 Compatibilidad
 
-- La versión mínima de Android debe confirmarse con los requisitos de la facultad. Se recomienda elegir una versión que permita usar `java.time` sin complejidad adicional y documentar la decisión.
-- La versión objetivo y las dependencias se fijarán al iniciar el repositorio para asegurar builds reproducibles.
+- `minSdk 26`.
+- `targetSdk 36` y `compileSdk 36.1`.
+- Versión de aplicación actual: `1.0` (`versionCode 1`).
+- La matriz ejecutada incluye Pixel 9a AVD sobre Android API 36.
 
 ## 14. Requisitos no funcionales
 
@@ -630,21 +746,14 @@ Los límites de rendimiento son objetivos de aceptación para el prototipo, no g
 
 ### 15.1 Corpus
 
-Se construirá un conjunto versionado de al menos 30 frases, dividido como mínimo en:
+Se utiliza un conjunto versionado de 30 frases válidas soportadas, acompañado por pruebas unitarias separadas para casos ambiguos, inválidos y no soportados. El corpus registra:
 
-- 15 frases válidas soportadas.
-- 8 frases ambiguas o con conflicto.
-- 7 frases inválidas o no soportadas.
+- Frase y resultado esperado por campo.
+- Fecha y hora base fija: 16/11/2026 15:00.
+- Zona horaria: `America/Argentina/Buenos_Aires`.
+- Categorías y palabras clave controladas.
 
-Cada caso debe incluir:
-
-- Identificador.
-- Frase.
-- Fecha y hora base.
-- Categorías/palabras clave disponibles.
-- Campos esperados.
-- Advertencias esperadas.
-- Clasificación: válida, ambigua o no soportada.
+Los casos unitarios adicionales documentan las advertencias esperadas y clasifican entradas ambiguas, inválidas o no soportadas.
 
 ### 15.2 Métricas
 
@@ -654,6 +763,8 @@ Cada caso debe incluir:
 - Rechazo controlado = casos inválidos que generan advertencia y no cierre inesperado / casos inválidos.
 
 El informe final debe mostrar una matriz por caso y un resumen de errores frecuentes. Una frase parcialmente interpretada no cuenta como coincidencia completa, aunque sus campos acertados sí cuentan en la métrica por campo.
+
+Resultado actual: 100 % en título, tipo, fecha, hora, prioridad, categoría, descripción, recordatorio y coincidencia exacta para las 30 frases del corpus soportado. Este valor no implica comprensión general del lenguaje natural; solo representa la gramática documentada.
 
 ## 16. Estrategia de pruebas
 
@@ -666,6 +777,9 @@ El informe final debe mostrar una matriz por caso y un resumen de errores frecue
 - Detección de categorías y conflictos de palabras clave.
 - Reglas de tareas/eventos y recordatorios.
 - Ordenamiento y combinación de filtros.
+- Cálculo y generación de recurrencias.
+- Cálculo de resumen semanal.
+- Serialización y deserialización del respaldo.
 
 ### 16.2 Pruebas de integración
 
@@ -673,6 +787,7 @@ El informe final debe mostrar una matriz por caso y un resumen de errores frecue
 - Repositorio y casos de uso.
 - Programar, reemplazar y cancelar recordatorios usando abstracciones verificables.
 - Migración de base de datos, si la versión del esquema cambia durante el proyecto.
+- Reemplazo transaccional de categorías y actividades desde un respaldo.
 
 ### 16.3 Pruebas de interfaz/aceptación
 
@@ -684,6 +799,10 @@ El informe final debe mostrar una matriz por caso y un resumen de errores frecue
 - Buscar y combinar filtros.
 - Navegar entre agenda y calendario.
 - Denegar permiso de notificaciones sin impedir el guardado.
+- Completar una tarea recurrente y comprobar la nueva ocurrencia.
+- Navegar por el resumen semanal.
+- Exportar, validar e importar un respaldo local.
+- Comprobar una notificación real en el emulador.
 
 ### 16.4 Prueba exploratoria de usabilidad
 
@@ -695,9 +814,13 @@ Realizar una sesión breve con participantes disponibles, usando tareas guiadas.
 4. Encontrar y completar una tarea.
 5. Cambiar un recordatorio y eliminar otra actividad.
 
+### 16.5 Resultado de la ejecución final
+
+El 24/11/2026 se ejecutaron `testDebugUnitTest`, `connectedDebugAndroidTest`, `lintDebug` y `assembleDebug`. El resultado fue exitoso: 46 pruebas unitarias, 5 instrumentadas y cero errores de lint. Además se realizó un recorrido end-to-end sobre un Pixel 9a AVD que incluyó una notificación real, un respaldo JSON con tres actividades y cuatro categorías, la importación confirmada del respaldo inicial y la comprobación final de cero actividades y las tres categorías originales.
+
 ## 17. Datos de demostración
 
-El proyecto debe incluir un mecanismo de carga reproducible para el entorno de demo, separado de los datos reales. Conjunto sugerido:
+El entorno de demostración debe usar datos controlados, creados mediante el guion o recuperados desde un respaldo JSON separado de cualquier dato real. Conjunto sugerido:
 
 - Dos tareas pendientes para hoy.
 - Una tarea completada.
@@ -707,11 +830,11 @@ El proyecto debe incluir un mecanismo de carga reproducible para el entorno de d
 - Una actividad sin fecha.
 - Tres categorías con palabras clave.
 
-La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
+La aplicación no inserta datos de demo automáticamente. Antes de cada exposición se debe restaurar el respaldo acordado para evitar duplicados y asegurar un recorrido reproducible.
 
 ## 18. Roadmap de implementación
 
-### Fase 0 — Alineación y diseño
+### Fase 0 — Alineación y diseño — Completada
 
 - Confirmar requisitos de la facultad, versión mínima de Android y formato de entrega.
 - Validar reglas de negocio y gramática soportada.
@@ -721,7 +844,7 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 
 **Salida:** decisiones cerradas, backlog inicial y proyecto compilable.
 
-### Fase 1 — Núcleo local
+### Fase 1 — Núcleo local — Completada
 
 - Entidades, DAO, Room y repositorios.
 - Casos de uso de tareas, eventos y categorías.
@@ -731,7 +854,7 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 
 **Salida:** ciclo CRUD local funcional.
 
-### Fase 2 — Consulta y calendario
+### Fase 2 — Consulta y calendario — Completada
 
 - Agenda agrupada.
 - Calendario mensual.
@@ -740,7 +863,7 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 
 **Salida:** organización y consulta completas.
 
-### Fase 3 — Recordatorios
+### Fase 3 — Recordatorios — Completada
 
 - Permisos y canal de notificaciones.
 - Programación local.
@@ -749,7 +872,7 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 
 **Salida:** recordatorios consistentes con el ciclo de vida de la actividad.
 
-### Fase 4 — Parser
+### Fase 4 — Parser — Completada
 
 - Normalización y reglas temporales.
 - Prioridad, categoría, tipo y título.
@@ -759,14 +882,13 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 
 **Salida:** carga por texto medible y corregible.
 
-### Fase 5 — Integración y entrega
+### Fase 5 — Integración y entrega — En curso
 
-- Datos de demostración.
-- Pruebas end-to-end de flujos críticos.
-- Accesibilidad y mensajes de error.
-- Corrección de defectos.
-- Documentación técnica, manual breve y reporte de evaluación.
-- Ensayo del escenario de presentación.
+- Completado: recurrencia, resumen semanal y respaldo local.
+- Completado: pruebas automatizadas y end-to-end de los flujos críticos.
+- Completado: corrección de defectos detectados y reporte del parser.
+- En curso: datos controlados de demostración, revisión de accesibilidad y mensajes.
+- Pendiente: documentación final, manual breve y ensayo de la presentación.
 
 **Salida:** versión candidata para la entrega académica.
 
@@ -784,10 +906,13 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 - Confirmación editable y gestión de ambigüedad.
 - Persistencia offline.
 - Corpus, métricas y pruebas críticas.
+- Recurrencia diaria, semanal y mensual.
+- Resumen semanal.
+- Respaldo local JSON.
+- Ordenamiento configurable.
 
 ### P1 — Importante si el calendario académico lo permite
 
-- Orden seleccionado por el usuario.
 - Apertura del detalle desde la notificación.
 - Recuperación reforzada después de reinicio.
 - Mayor pulido visual y accesibilidad.
@@ -795,10 +920,10 @@ La carga de demo no debe duplicarse cada vez que se inicia la aplicación.
 
 ### P2 — Posterior al proyecto
 
-- Recurrencia.
-- Respaldo local.
-- Resumen semanal.
+- Tema oscuro y widgets.
+- Reglas avanzadas de recurrencia.
 - Integraciones y sincronización.
+- Respaldo opcional en la nube.
 
 ## 20. Riesgos y mitigaciones
 
@@ -827,6 +952,8 @@ El MVP está terminado cuando:
 8. El equipo dispone de datos de demostración y un guion de presentación.
 9. Las limitaciones del parser y del prototipo están documentadas.
 
+Estado actual: el software cumple los flujos funcionales y las pruebas automatizadas/end-to-end definidas para el prototipo. Permanecen como tareas de cierre académico la validación en dispositivo físico —si la cátedra la exige—, la preparación del paquete de entrega y el ensayo final de la presentación.
+
 ## 22. Guion sugerido para la demostración final
 
 1. Abrir la agenda con datos locales y mostrar funcionamiento sin conexión.
@@ -836,29 +963,37 @@ El MVP está terminado cuando:
 5. Ver la actividad en agenda y calendario.
 6. Editar su horario y explicar la reprogramación del recordatorio.
 7. Completar una tarea y filtrar pendientes/completadas.
-8. Eliminar un evento y demostrar que desaparece de ambas vistas.
-9. Presentar el corpus, las métricas y un caso ambiguo/no soportado.
+8. Completar una tarea recurrente y mostrar la nueva ocurrencia futura.
+9. Mostrar el resumen semanal y navegar entre semanas.
+10. Exportar un respaldo JSON y explicar la confirmación de importación.
+11. Eliminar un evento y demostrar que desaparece de ambas vistas.
+12. Presentar el corpus, las métricas y un caso ambiguo/no soportado.
 
-## 23. Decisiones pendientes antes del desarrollo
+## 23. Decisiones técnicas cerradas y pendientes académicos
 
-Estas definiciones no deben bloquear el diseño inicial, pero conviene cerrarlas en la Fase 0:
+### Decisiones cerradas
 
-1. Versión mínima de Android exigida o permitida por la facultad.
-2. Formato exacto de fechas absolutas con año omitido.
-3. Lista definitiva de alias para inferir evento y prioridad.
-4. Si el recordatorio se expresará solo como anticipación o también como fecha/hora independiente.
-5. Librería o componente visual del calendario, si se permite usar dependencias externas.
-6. Dispositivos/emuladores que formarán la matriz mínima de pruebas.
-7. Umbral final de precisión del parser si la cátedra establece uno distinto del 80 % propuesto.
-8. Entregables académicos adicionales: memoria, diagramas UML, video, APK/AAB y repositorio.
+1. Compatibilidad: `minSdk 26`, `targetSdk 36` y `compileSdk 36.1`.
+2. Fechas absolutas documentadas en formato `dd/MM/yyyy`; las fechas relativas se calculan con el reloj local.
+3. Alias del parser acotados y documentados en la ayuda de la aplicación.
+4. Recordatorios expresados como anticipaciones predefinidas respecto de la fecha y hora de la actividad.
+5. Calendario mensual implementado con componentes Android propios, sin dependencia externa específica de calendario.
+6. Matriz inicial de pruebas: Pixel 9a AVD sobre Android API 36.
+7. Umbral del corpus: 80 % mínimo; resultado actual: 100 % para la gramática soportada.
+
+### Pendientes académicos
+
+1. Confirmar si la cátedra exige prueba adicional en un dispositivo físico.
+2. Confirmar el formato final de entrega: APK o AAB, memoria, diagramas UML y video.
+3. Incorporar el guion definitivo de exposición y responsables de cada parte.
 
 ## 24. Próximos pasos recomendados
 
-1. Validar este PRD con todos los integrantes y el docente/tutor.
-2. Resolver las decisiones pendientes de la sección 23.
-3. Crear wireframes de baja fidelidad para los cinco flujos críticos.
-4. Transformar los requisitos P0 en épicas e historias del tablero.
-5. Definir el modelo de datos y los contratos del parser antes de implementar UI detallada.
-6. Construir el primer corpus junto con las reglas, no al final del proyecto.
-7. Planificar una primera entrega vertical: crear una tarea, persistirla y verla en la agenda.
+1. Validar la versión 1.2 de este PRD con todos los integrantes y el docente/tutor.
+2. Preparar un APK de entrega reproducible y registrar su versión.
+3. Ejecutar la matriz final en el dispositivo o emulador exigido por la cátedra.
+4. Incorporar capturas y videos del recorrido validado a la bitácora del foro.
+5. Preparar la memoria técnica, diagramas y reporte del corpus.
+6. Ensayar el guion de demostración con datos controlados y respaldo previo.
+7. Congelar la versión candidata y corregir únicamente defectos que bloqueen la entrega.
 
