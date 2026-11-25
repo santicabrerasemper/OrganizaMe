@@ -79,7 +79,7 @@ class ParserActividadTest {
             emptyList()
         )
 
-        assertEquals("dentista", resultado.titulo.valor)
+        assertEquals("turno dentista", resultado.titulo.valor)
         assertEquals(TipoActividad.EVENTO, resultado.tipo.valor)
         assertEquals(LocalDate.of(2026, 10, 15), resultado.fecha.valor)
         assertEquals(LocalTime.of(9, 30), resultado.hora.valor)

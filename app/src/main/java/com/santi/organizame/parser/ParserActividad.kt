@@ -243,7 +243,9 @@ class ParserActividad {
 
         PATRON_ALIAS_EVENTO.findAll(texto).forEach { coincidencia ->
             tipos += TipoActividad.EVENTO
-            if (coincidencia.value != "reunion") {
+            if (coincidencia.value != "reunion" &&
+                coincidencia.value != "turno"
+            ) {
                 consumir(coincidencia.range, consumido)
             }
         }
@@ -306,10 +308,31 @@ class ParserActividad {
                     "(?<![\\p{L}\\p{N}])${Regex.escape(expresion)}(?![\\p{L}\\p{N}])"
                 )
                 patron.findAll(texto).forEach { coincidencia ->
-                    if (coincidencia.range.none { consumido.getOrElse(it) { false } }) {
+
+                    if (coincidencia.range.none {
+                            consumido.getOrElse(it) { false }
+                        }) {
+
                         encontradas += categoria.id
-                        rangos += coincidencia.range
+
+                        val textoAnterior = texto.substring(
+                            0,
+                            coincidencia.range.first
+                        )
+
+                        val esParteDelTitulo = Regex(
+                            """\b(?:al|a\s+la|en\s+el|en\s+la)\s+$"""
+                        ).containsMatchIn(textoAnterior)
+
+                        val esCategoriaExplicita = Regex(
+                            """\bcategoria\s+$"""
+                        ).containsMatchIn(textoAnterior)
+
+                        if (!esParteDelTitulo || esCategoriaExplicita) {
+                            rangos += coincidencia.range
+                        }
                     }
+
                 }
             }
         }
@@ -387,6 +410,7 @@ class ParserActividad {
         }
     }
 
+
     private fun extraerDescripcion(
         original: String,
         texto: String,
@@ -398,22 +422,49 @@ class ParserActividad {
         )
 
         val coincidencia = patron.find(texto)
-            ?: return CampoParser(null, EstadoCampoParser.FALTANTE)
+            ?: return CampoParser(
+                null,
+                EstadoCampoParser.FALTANTE
+            )
 
         val rango = coincidencia.groups[1]!!.range
 
-        val descripcion = original.substring(
-            rango.first,
-            rango.last + 1
-        ).trim()
+        // Conservar solamente las palabras que no fueron
+        // reconocidas como fecha, hora u otros campos.
+        val descripcion = buildString {
 
+            for (indice in rango) {
+
+                if (!consumido.getOrElse(indice) { false }) {
+                    append(original[indice])
+                } else {
+                    append(' ')
+                }
+            }
+
+        }
+            .replace(Regex("""\s+"""), " ")
+            .trim()
+
+        // Evitar que la descripción forme parte del título.
         consumir(coincidencia.range, consumido)
 
-        return CampoParser(
-            descripcion,
-            EstadoCampoParser.EXTRAIDO
-        )
+        return if (descripcion.isBlank()) {
+
+            CampoParser(
+                null,
+                EstadoCampoParser.FALTANTE
+            )
+
+        } else {
+
+            CampoParser(
+                descripcion,
+                EstadoCampoParser.EXTRAIDO
+            )
+        }
     }
+
     private fun construirTextoRestante(original: String, consumido: BooleanArray): String {
         val texto = buildString {
             original.forEachIndexed { indice, caracter ->

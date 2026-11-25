@@ -26,10 +26,14 @@ class ServicioAlarma : Service() {
     }
 
     companion object {
+
         const val ACCION_APAGAR =
             "com.santi.organizame.APAGAR_ALARMA"
 
-        private const val CANAL_ID = "alarmas_continuas_v1"
+        const val ACCION_FINALIZADA =
+            "com.santi.organizame.ALARMA_FINALIZADA"
+
+        private const val CANAL_ID = "alarmas_continuas_v2"
         private const val ID_NOTIFICACION = 900001
         private const val DURACION_MAXIMA = 120000L
     }
@@ -42,25 +46,26 @@ class ServicioAlarma : Service() {
         startId: Int
     ): Int {
 
-        // Detener cuando el usuario toca Apagar alarma
+        // Apagar alarma desde la notificación
         if (intent?.action == ACCION_APAGAR) {
-            Log.d("OrganizaMeAvisos", "Usuario apagó la alarma")
+
+            Log.d(
+                "OrganizaMeAvisos",
+                "Usuario apagó la alarma"
+            )
+
             stopSelf()
             return START_NOT_STICKY
         }
 
+        // Obtener datos del recordatorio
         val titulo = intent?.getStringExtra(
             ReceptorRecordatorio.EXTRA_TITULO
         ) ?: "Actividad pendiente"
 
-        val actividadId = intent?.getLongExtra(
-            ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID,
-            -1L
-        ) ?: -1L
-
         crearCanal()
 
-        // Acción para apagar el sonido
+        // Botón Apagar alarma de la notificación
         val intentApagar = Intent(
             this,
             ServicioAlarma::class.java
@@ -76,64 +81,96 @@ class ServicioAlarma : Service() {
                     PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Abrir la actividad al tocar la notificación
-        val intentAbrir = Intent(
+        // Preparar la pantalla completa de alarma
+        val intentPantalla = Intent(
             this,
-            MainActivity::class.java
+            PantallaAlarmaActividad::class.java
         ).apply {
+
             putExtra(
-                ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID,
-                actividadId
+                ReceptorRecordatorio.EXTRA_TITULO,
+                titulo
             )
-            this.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+            this.flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
 
-        val pendienteAbrir = PendingIntent.getActivity(
+        val pendientePantalla = PendingIntent.getActivity(
             this,
-            900001,
-            intentAbrir,
+            900002,
+            intentPantalla,
             PendingIntent.FLAG_UPDATE_CURRENT or
                     PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Notificación permanente mientras suena
+        // Notificación de alarma activa
         val notificacion = NotificationCompat.Builder(
             this,
             CANAL_ID
         )
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setSmallIcon(
+                android.R.drawable.ic_dialog_alert
+            )
             .setContentTitle("Alarma: $titulo")
             .setContentText("La alarma está sonando")
-            .setContentIntent(pendienteAbrir)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+
+            // Tocar la notificación abre la pantalla
+            .setContentIntent(pendientePantalla)
+
+            .setCategory(
+                NotificationCompat.CATEGORY_ALARM
+            )
+
+            .setPriority(
+                NotificationCompat.PRIORITY_HIGH
+            )
+
+            // Solicitar pantalla completa
+            .setFullScreenIntent(
+                pendientePantalla,
+                true
+            )
+
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+
+            // Mantener botón en la barra de notificaciones
             .addAction(
                 android.R.drawable.ic_media_pause,
                 "Apagar alarma",
                 pendienteApagar
             )
+
             .build()
 
-        // Mantener el servicio activo
+        // Mantener servicio activo mientras suena
         try {
-            startForeground(ID_NOTIFICACION, notificacion)
+
+            startForeground(
+                ID_NOTIFICACION,
+                notificacion
+            )
+
         } catch (error: Exception) {
+
             Log.e(
                 "OrganizaMeAvisos",
-                "No se pudo iniciar el servicio de alarma",
+                "No se pudo iniciar el servicio",
                 error
             )
+
             stopSelf()
             return START_NOT_STICKY
         }
 
+        // Reproducir el sonido continuamente
         iniciarSonido()
 
-        // Detener automáticamente después de dos minutos
+        // Apagado automático después de dos minutos
         manejador.removeCallbacks(apagadoAutomatico)
+
         manejador.postDelayed(
             apagadoAutomatico,
             DURACION_MAXIMA
@@ -142,6 +179,7 @@ class ServicioAlarma : Service() {
         return START_NOT_STICKY
     }
 
+    // Canal especial para alarmas
     private fun crearCanal() {
 
         val administrador = getSystemService(
@@ -151,33 +189,41 @@ class ServicioAlarma : Service() {
         val canal = NotificationChannel(
             CANAL_ID,
             "Alarmas activas",
-            NotificationManager.IMPORTANCE_LOW
+            NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Alarmas con opción para apagar"
+
+            description =
+                "Alarmas con opción para apagar"
+
+            // El sonido lo reproduce MediaPlayer
             setSound(null, null)
         }
 
         administrador.createNotificationChannel(canal)
     }
 
+    // Reproducir sonido de alarma
     private fun iniciarSonido() {
 
-        // Detener un sonido anterior si existiera
         reproductor?.release()
         reproductor = null
 
         val sonidos = listOfNotNull(
+
             RingtoneManager.getActualDefaultRingtoneUri(
                 this,
                 RingtoneManager.TYPE_ALARM
             ),
+
             RingtoneManager.getDefaultUri(
                 RingtoneManager.TYPE_ALARM
             ),
+
             RingtoneManager.getActualDefaultRingtoneUri(
                 this,
                 RingtoneManager.TYPE_NOTIFICATION
             )
+
         ).distinct()
 
         for (sonido in sonidos) {
@@ -185,9 +231,12 @@ class ServicioAlarma : Service() {
             val nuevoReproductor = MediaPlayer()
 
             try {
+
                 nuevoReproductor.setAudioAttributes(
                     AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_ALARM)
+                        .setUsage(
+                            AudioAttributes.USAGE_ALARM
+                        )
                         .setContentType(
                             AudioAttributes.CONTENT_TYPE_SONIFICATION
                         )
@@ -200,6 +249,7 @@ class ServicioAlarma : Service() {
                 )
 
                 nuevoReproductor.isLooping = true
+
                 nuevoReproductor.prepare()
                 nuevoReproductor.start()
 
@@ -230,6 +280,7 @@ class ServicioAlarma : Service() {
         )
     }
 
+    // Liberar recursos cuando termina la alarma
     override fun onDestroy() {
 
         manejador.removeCallbacks(apagadoAutomatico)
@@ -239,7 +290,15 @@ class ServicioAlarma : Service() {
 
         stopForeground(STOP_FOREGROUND_REMOVE)
 
-        Log.d("OrganizaMeAvisos", "Servicio de alarma detenido")
+        Log.d(
+            "OrganizaMeAvisos",
+            "Servicio de alarma detenido"
+        )
+
+        // Avisar a la pantalla que la alarma terminó
+        sendBroadcast(
+            Intent(ACCION_FINALIZADA).setPackage(packageName)
+        )
 
         super.onDestroy()
     }

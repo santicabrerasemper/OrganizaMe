@@ -405,49 +405,82 @@ class MainActivity : AppCompatActivity() {
     }
 
     // Preparar el texto del detalle
+
+
     private fun formatearActividad(
         actividad: Actividad,
         nombreCategoria: String
     ): String = buildString {
 
-        append(actividad.titulo)
+        // Tipo de actividad
+        val tipo = if (actividad.tipo == TipoActividad.TAREA) {
+            "📋  Tarea"
+        } else {
+            "📅  Evento"
+        }
 
-        append("\nTipo: ").append(
-            if (actividad.tipo == TipoActividad.TAREA)
-                "Tarea"
-            else
-                "Evento"
+        append(tipo)
+        append("\n\n")
+
+        // Fecha y hora
+        append("📅  ")
+
+        append(
+            actividad.fecha?.format(FORMATO_FECHA)
+                ?: "Sin fecha"
         )
 
+        actividad.hora?.let {
+            append("   ·   ")
+            append(it.format(FORMATO_HORA))
+            append(" hs")
+        }
+
+        append("\n\n")
+
+        // Prioridad
+        val iconoPrioridad = when (actividad.prioridad.name) {
+            "ALTA" -> "🔴"
+            "MEDIA" -> "🟡"
+            else -> "🟢"
+        }
+
+        append("$iconoPrioridad  Prioridad: ")
+        append(actividad.prioridad)
+        append("\n")
+
+        // Categoría
+        append("📁  Categoría: ")
+        append(nombreCategoria)
+        append("\n")
+
+        // Recordatorio
+        append("🔔  Recordatorio: ")
+        append(nombreRecordatorio(actividad.recordatorio))
+
+        // Estado de la tarea
+        actividad.estadoTarea?.let {
+            append("\n")
+
+            val iconoEstado = if (it.name == "COMPLETADA") {
+                "✅"
+            } else {
+                "⏳"
+            }
+
+            append("$iconoEstado  Estado: ")
+            append(it)
+        }
+
+        // Descripción separada
         actividad.descripcion
             ?.takeIf { it.isNotBlank() }
             ?.let {
-                append("\n").append(it)
+                append("\n\n")
+                append("📝  DESCRIPCIÓN")
+                append("\n")
+                append(it)
             }
-
-        actividad.fecha?.let {
-            append("\nFecha: ")
-            append(it.format(FORMATO_FECHA))
-        }
-
-        actividad.hora?.let {
-            append("\nHora: ")
-            append(it.format(FORMATO_HORA))
-        }
-
-        append("\nPrioridad: ")
-        append(actividad.prioridad)
-
-        append("\nCategoría: ")
-        append(nombreCategoria)
-
-        append("\nRecordatorio: ")
-        append(nombreRecordatorio(actividad.recordatorio))
-
-        actividad.estadoTarea?.let {
-            append("\nEstado: ")
-            append(it)
-        }
     }
 
     // Mostrar el nombre del recordatorio

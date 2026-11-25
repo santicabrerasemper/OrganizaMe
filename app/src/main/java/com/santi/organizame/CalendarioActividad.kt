@@ -15,6 +15,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.TextView
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import com.santi.organizame.modelo.OrganizaMeDatabase
 
 class CalendarioActividad : AppCompatActivity() {
@@ -124,47 +131,175 @@ class CalendarioActividad : AppCompatActivity() {
         adaptador.actualizarLista(dias)
     }
 
+
     private fun mostrarActividadesDelDia(fecha: LocalDate) {
 
         val actividadesDelDia = actividades.filter {
             it.fecha == fecha
         }
 
-        val mensaje = if (actividadesDelDia.isEmpty()) {
+        fun dp(valor: Int): Int {
+            return (valor * resources.displayMetrics.density).toInt()
+        }
 
-            "No hay actividades para este día."
+        val colorTexto = ContextCompat.getColor(
+            this, R.color.on_background
+        )
+
+        val colorSecundario = ContextCompat.getColor(
+            this, R.color.on_surface_variant
+        )
+
+        val colorTarjeta = ContextCompat.getColor(
+            this, R.color.surface_variant
+        )
+
+        // Contenedor de las actividades
+        val contenedor = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+
+            setPadding(
+                dp(20), dp(20),
+                dp(20), dp(8)
+            )
+        }
+
+        if (actividadesDelDia.isEmpty()) {
+
+            val mensaje = TextView(this).apply {
+                text = "📅  No hay actividades para este día."
+                textSize = 16f
+                setTextColor(colorTexto)
+            }
+
+            contenedor.addView(mensaje)
 
         } else {
 
-            actividadesDelDia.mapIndexed { indice, actividad ->
+            actividadesDelDia.forEachIndexed { indice, actividad ->
 
-                buildString {
-                    append("${indice + 1}. ${actividad.titulo}\n")
+                // Tarjeta individual
+                val tarjeta = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
 
-                    actividad.descripcion?.takeIf { it.isNotBlank() }?.let {
-                        append("Descripción: $it\n")
+                    setPadding(
+                        dp(16), dp(16),
+                        dp(16), dp(16)
+                    )
+
+                    background = GradientDrawable().apply {
+                        setColor(colorTarjeta)
+                        cornerRadius = dp(16).toFloat()
                     }
+                }
+
+                // Título
+                val titulo = TextView(this).apply {
+                    text = "${indice + 1}. ${actividad.titulo}"
+                    textSize = 24f
+                    typeface = Typeface.DEFAULT_BOLD
+                    setTextColor(colorTexto)
+                }
+
+                tarjeta.addView(titulo)
+
+                // Información
+                val datos = buildString {
+
+                    append(
+                        if (actividad.tipo.name == "TAREA")
+                            "📋  Tarea"
+                        else
+                            "📅  Evento"
+                    )
+
+                    append("\n")
 
                     actividad.hora?.let {
-                        append("Hora: $it\n")
+                        append("🕒  Hora: ")
+                        append(
+                            it.format(
+                                DateTimeFormatter.ofPattern("HH:mm")
+                            )
+                        )
+                        append(" hs\n")
                     }
 
-                    append("Prioridad: ${actividad.prioridad}\n")
+                    val iconoPrioridad = when (
+                        actividad.prioridad.name
+                    ) {
+                        "ALTA" -> "🔴"
+                        "MEDIA" -> "🟡"
+                        else -> "🟢"
+                    }
+
+                    append("$iconoPrioridad  Prioridad: ")
+                    append(actividad.prioridad)
 
                     actividad.estadoTarea?.let {
-                        append("Estado: $it\n")
-                    }
-                }.trimEnd()
+                        append("\n")
 
-            }.joinToString("\n\n")
+                        val iconoEstado =
+                            if (it.name == "COMPLETADA")
+                                "✅"
+                            else
+                                "⏳"
+
+                        append("$iconoEstado  Estado: $it")
+                    }
+
+                    actividad.descripcion
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let {
+                            append("\n\n")
+                            append("📝  ")
+                            append(it)
+                        }
+                }
+
+                val textoDatos = TextView(this).apply {
+                    text = datos
+                    textSize = 18f
+                    setTextColor(colorSecundario)
+
+                    setPadding(
+                        0, dp(12), 0, 0
+                    )
+
+                    setLineSpacing(
+                        dp(6).toFloat(), 1f
+                    )
+                }
+
+                tarjeta.addView(textoDatos)
+
+                val parametros = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT
+                ).apply {
+                    bottomMargin = dp(12)
+                }
+
+                contenedor.addView(tarjeta, parametros)
+            }
         }
 
+        // Permite desplazarse cuando hay muchas actividades
+        val scroll = ScrollView(this).apply {
+            addView(contenedor)
+        }
+
+        val fechaFormateada = fecha.format(
+            DateTimeFormatter.ofPattern("dd/MM/yyyy")
+        )
+
         AlertDialog.Builder(this)
-            .setTitle("Actividades del ${fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))}")
-            .setMessage(mensaje)
+            .setTitle("Actividades · $fechaFormateada")
+            .setView(scroll)
             .setPositiveButton("Cerrar", null)
             .show()
     }
+
 
     private fun cargarActividades() {
         actividadRepository.obtenerTodas { resultado ->
