@@ -22,6 +22,7 @@ import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.TipoActividad
 import com.santi.organizame.parser.ParserActividad
 import java.time.ZonedDateTime
+import androidx.appcompat.app.AppCompatDelegate
 import java.time.format.DateTimeFormatter
 
 class MainActivity : AppCompatActivity() {
@@ -39,8 +40,49 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+
+        val preferencias = getSharedPreferences(
+            "ajustes_organizame",
+            MODE_PRIVATE
+        )
+
+        val modoOscuro = preferencias.getBoolean("modo_oscuro", false)
+
+        AppCompatDelegate.setDefaultNightMode(
+            if (modoOscuro)
+                AppCompatDelegate.MODE_NIGHT_YES
+            else
+                AppCompatDelegate.MODE_NIGHT_NO
+        )
+
+
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+
+        binding.btnModoOscuro.text =
+            if (modoOscuro) "Desactivar modo oscuro"
+            else "Activar modo oscuro"
+
+        binding.btnModoOscuro.setOnClickListener {
+
+            val nuevoModo = !preferencias.getBoolean(
+                "modo_oscuro",
+                false
+            )
+
+            preferencias.edit()
+                .putBoolean("modo_oscuro", nuevoModo)
+                .apply()
+
+            AppCompatDelegate.setDefaultNightMode(
+                if (nuevoModo)
+                    AppCompatDelegate.MODE_NIGHT_YES
+                else
+                    AppCompatDelegate.MODE_NIGHT_NO
+            )
+        }
+
 
         // Repositorios
         actividadRepository = ActividadRepository(
@@ -52,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         )
 
         // Configurar notificaciones
-        crearCanalRecordatorios()
+
         solicitarPermisoNotificaciones()
 
         // Botón Hoy

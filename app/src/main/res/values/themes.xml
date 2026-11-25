@@ -1,25 +1,43 @@
+
 <resources>
-    <style name="Theme.OrganizaMe" parent="Theme.Material3.Light.NoActionBar">
+
+    <style name="Theme.OrganizaMe.Base"
+        parent="Theme.Material3.DayNight.NoActionBar">
+
         <item name="colorPrimary">@color/primary</item>
         <item name="colorPrimaryDark">@color/primary_dark</item>
         <item name="colorOnPrimary">@color/on_primary</item>
         <item name="colorPrimaryContainer">@color/primary_container</item>
         <item name="colorOnPrimaryContainer">@color/primary_dark</item>
+
         <item name="colorSecondary">@color/secondary</item>
         <item name="colorSecondaryContainer">@color/secondary_container</item>
+
         <item name="colorSurface">@color/surface</item>
         <item name="colorOnSurface">@color/on_background</item>
         <item name="colorSurfaceVariant">@color/surface_variant</item>
         <item name="colorOnSurfaceVariant">@color/on_surface_variant</item>
         <item name="colorOutline">@color/outline</item>
         <item name="colorError">@color/danger</item>
+
         <item name="android:colorAccent">@color/primary</item>
         <item name="android:fontFamily">sans</item>
-        <item name="materialButtonStyle">@style/Widget.OrganizaMe.Button.Primary</item>
+
+        <item name="materialButtonStyle">
+            @style/Widget.OrganizaMe.Button.Primary
+        </item>
+
         <item name="android:statusBarColor">@color/background</item>
-        <item name="android:windowLightStatusBar">true</item>
         <item name="android:navigationBarColor">@color/primary_dark</item>
         <item name="android:windowBackground">@color/background</item>
-    </style>
-</resources>
 
+    </style>
+
+    <style name="Theme.OrganizaMe"
+        parent="Theme.OrganizaMe.Base">
+
+        <item name="android:windowLightStatusBar">true</item>
+
+    </style>
+
+</resources>

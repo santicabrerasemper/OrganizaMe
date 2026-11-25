@@ -1,0 +1,11 @@
+
+<resources>
+
+    <style name="Theme.OrganizaMe"
+        parent="Theme.OrganizaMe.Base">
+
+        <item name="android:windowLightStatusBar">false</item>
+
+    </style>
+
+</resources>
