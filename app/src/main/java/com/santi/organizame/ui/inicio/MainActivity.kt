@@ -1,5 +1,5 @@
 
-package com.santi.organizame
+package com.santi.organizame.ui.inicio
 
 import android.Manifest
 import android.app.NotificationChannel
@@ -28,6 +28,15 @@ import com.santi.organizame.ui.inicio.InicioViewModel
 import com.santi.organizame.ui.inicio.InicioViewModelFactory
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
+import com.santi.organizame.data.recordatorios.ReceptorRecordatorio
+import com.santi.organizame.ui.calendario.CalendarioActividad
+import com.santi.organizame.ui.categorias.CategoriasActividad
+import com.santi.organizame.ui.formulario.NuevaTareaActividad
+import com.santi.organizame.ui.hoy.HoyActividad
+import com.santi.organizame.ui.lista.ListaActividadesActividad
+import com.santi.organizame.ui.parser.AyudaParserActividad
+import com.santi.organizame.ui.respaldo.RespaldoActividad
+import com.santi.organizame.ui.resumen.ResumenSemanalActividad
 
 class MainActivity : AppCompatActivity() {
 

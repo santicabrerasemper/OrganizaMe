@@ -20,6 +20,13 @@ import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.Prioridad
 import com.santi.organizame.modelo.Recurrencia
 import com.santi.organizame.modelo.TipoActividad
+import com.santi.organizame.data.recordatorios.ProgramadorRecordatorios
+import com.santi.organizame.ui.calendario.CalendarioActividad
+import com.santi.organizame.ui.formulario.NuevaTareaActividad
+import com.santi.organizame.ui.hoy.HoyActividad
+import com.santi.organizame.ui.inicio.MainActivity
+import com.santi.organizame.ui.lista.ListaActividadesActividad
+import com.santi.organizame.ui.resumen.ResumenSemanalActividad
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

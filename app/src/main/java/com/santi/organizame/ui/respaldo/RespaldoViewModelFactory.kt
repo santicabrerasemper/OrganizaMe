@@ -3,7 +3,7 @@ package com.santi.organizame.ui.respaldo
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import com.santi.organizame.ProgramadorRecordatorios
+import com.santi.organizame.data.recordatorios.ProgramadorRecordatorios
 import com.santi.organizame.data.recordatorios.GestorRecordatoriosAndroid
 import com.santi.organizame.data.respaldo.RoomRespaldoRepository
 import com.santi.organizame.domain.usecase.AnalizarRespaldoUseCase

@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.parser
 
 import android.os.Bundle
 import android.widget.Button
@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import android.view.ViewGroup
+import com.santi.organizame.R
 
 class AyudaParserActividad : AppCompatActivity() {
 

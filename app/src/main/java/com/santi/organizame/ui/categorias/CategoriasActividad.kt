@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.categorias
 
 import android.os.Bundle
 import android.view.View
@@ -24,6 +24,7 @@ import com.santi.organizame.ui.categorias.CategoriasUiState
 import com.santi.organizame.ui.categorias.CategoriasViewModel
 import com.santi.organizame.ui.categorias.CategoriasViewModelFactory
 import kotlinx.coroutines.launch
+import com.santi.organizame.R
 
 class CategoriasActividad : AppCompatActivity() {
 

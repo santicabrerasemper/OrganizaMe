@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.data.recordatorios
 
 import android.content.BroadcastReceiver
 import android.content.Context

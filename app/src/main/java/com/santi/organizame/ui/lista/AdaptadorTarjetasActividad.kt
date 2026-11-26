@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.lista
 
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -16,6 +16,7 @@ import android.text.SpannableString
 import android.text.Spanned
 import android.text.style.ForegroundColorSpan
 import java.time.temporal.IsoFields
+import com.santi.organizame.R
 
 class AdaptadorTarjetasActividad(
     private var actividades: List<Actividad>,

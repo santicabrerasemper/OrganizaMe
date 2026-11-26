@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.resumen
 
 import android.graphics.Typeface
 import android.os.Bundle
@@ -26,6 +26,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.launch
+import com.santi.organizame.R
 
 class ResumenSemanalActividad : AppCompatActivity() {
 

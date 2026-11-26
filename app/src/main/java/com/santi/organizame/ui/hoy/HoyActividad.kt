@@ -1,5 +1,5 @@
 
-package com.santi.organizame
+package com.santi.organizame.ui.hoy
 
 import android.content.Intent
 import android.graphics.Typeface
@@ -31,6 +31,8 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.launch
+import com.santi.organizame.R
+import com.santi.organizame.ui.formulario.NuevaTareaActividad
 
 class HoyActividad : AppCompatActivity() {
 

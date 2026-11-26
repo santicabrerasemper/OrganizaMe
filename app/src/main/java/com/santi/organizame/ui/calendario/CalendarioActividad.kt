@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.calendario
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
@@ -28,6 +28,7 @@ import androidx.core.content.ContextCompat
 import com.santi.organizame.ui.consulta.ConsultaActividadesViewModel
 import com.santi.organizame.ui.consulta.ConsultaActividadesViewModelFactory
 import kotlinx.coroutines.launch
+import com.santi.organizame.R
 
 class CalendarioActividad : AppCompatActivity() {
 

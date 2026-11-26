@@ -64,6 +64,25 @@ La aplicación usa MVVM sobre una separación por capas:
 
 Las Activities ya no consultan Room directamente. Observan `StateFlow` respetando el ciclo de vida, delegan las operaciones a sus ViewModels y reciben eventos puntuales mediante `SharedFlow`. Las dependencias se construyen en factories pequeñas, sin incorporar todavía un framework de inyección.
 
+La organización principal de paquetes es:
+
+```text
+com.santi.organizame
+├── ui
+│   ├── inicio, formulario, lista, hoy y calendario
+│   ├── categorias, resumen, respaldo, parser y alarma
+│   └── ViewModels, Activities y adapters de cada funcionalidad
+├── domain
+│   ├── repository
+│   ├── recordatorios
+│   └── usecase
+├── data
+│   ├── repository
+│   ├── respaldo
+│   └── recordatorios
+└── modelo, parser, filtros, resumen y respaldo
+```
+
 ## Gramática rápida del parser
 
 - Fechas: `hoy`, `mañana`, `pasado mañana`, días de la semana o `dd/MM/aaaa`.

@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.lista
 
 import android.content.Intent
 import android.os.Bundle
@@ -21,6 +21,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.santi.organizame.R
 import com.santi.organizame.filtros.CriteriosFiltroActividad
 import com.santi.organizame.filtros.OrdenActividad
 import com.santi.organizame.modelo.Actividad
@@ -33,6 +34,7 @@ import com.santi.organizame.ui.lista.ListaActividadesEfecto
 import com.santi.organizame.ui.lista.ListaActividadesUiState
 import com.santi.organizame.ui.lista.ListaActividadesViewModel
 import com.santi.organizame.ui.lista.ListaActividadesViewModelFactory
+import com.santi.organizame.ui.formulario.NuevaTareaActividad
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.launch
 

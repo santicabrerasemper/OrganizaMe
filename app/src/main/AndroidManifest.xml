@@ -14,13 +14,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OrganizaMe">
         <activity
-            android:name=".PantallaAlarmaActividad"
+            android:name=".ui.alarma.PantallaAlarmaActividad"
             android:exported="false"
             android:showWhenLocked="true"
             android:turnScreenOn="true"
             android:excludeFromRecents="true" />
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.inicio.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,22 +29,22 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".NuevaTareaActividad"
+            android:name=".ui.formulario.NuevaTareaActividad"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".AyudaParserActividad"
+            android:name=".ui.parser.AyudaParserActividad"
             android:exported="false" />
         <receiver
-            android:name=".ReceptorRecordatorio"
+            android:name=".data.recordatorios.ReceptorRecordatorio"
             android:exported="false" />
         <service
-            android:name=".ServicioAlarma"
+            android:name=".data.recordatorios.ServicioAlarma"
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
         <receiver
-            android:name=".ReceptorReprogramacion"
+            android:name=".data.recordatorios.ReceptorReprogramacion"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -54,25 +54,25 @@
             </intent-filter>
         </receiver>
         <activity
-            android:name=".CategoriasActividad"
+            android:name=".ui.categorias.CategoriasActividad"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".CalendarioActividad"
+            android:name=".ui.calendario.CalendarioActividad"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".HoyActividad"
+            android:name=".ui.hoy.HoyActividad"
             android:exported="false" />
         <activity
-            android:name=".ResumenSemanalActividad"
+            android:name=".ui.resumen.ResumenSemanalActividad"
             android:exported="false" />
         <activity
-            android:name=".RespaldoActividad"
+            android:name=".ui.respaldo.RespaldoActividad"
             android:exported="false" />
 
         <activity
-            android:name=".ListaActividadesActividad"
+            android:name=".ui.lista.ListaActividadesActividad"
             android:exported="false" />
     </application>
 

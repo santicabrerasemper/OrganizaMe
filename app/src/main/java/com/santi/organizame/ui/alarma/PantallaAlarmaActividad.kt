@@ -1,5 +1,5 @@
 
-package com.santi.organizame
+package com.santi.organizame.ui.alarma
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -13,6 +13,9 @@ import android.widget.TextView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.santi.organizame.R
+import com.santi.organizame.data.recordatorios.ReceptorRecordatorio
+import com.santi.organizame.data.recordatorios.ServicioAlarma
 
 class PantallaAlarmaActividad : AppCompatActivity() {
 

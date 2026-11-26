@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.calendario
 
 import android.view.LayoutInflater
 import android.view.View

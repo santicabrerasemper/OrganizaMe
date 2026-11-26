@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.categorias
 
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import com.santi.organizame.modelo.Categoria
+import com.santi.organizame.R
 
 class AdaptadorTarjetasCategoria(
     private val alEditar: (Categoria) -> Unit,

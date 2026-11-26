@@ -1,6 +1,5 @@
 package com.santi.organizame.data.recordatorios
 
-import com.santi.organizame.ProgramadorRecordatorios
 import com.santi.organizame.domain.recordatorios.GestorRecordatorios
 import com.santi.organizame.domain.recordatorios.ResultadoProgramacionRecordatorio
 import com.santi.organizame.modelo.Actividad

@@ -1,5 +1,5 @@
 
-package com.santi.organizame
+package com.santi.organizame.data.recordatorios
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -14,6 +14,8 @@ import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.santi.organizame.R
+import com.santi.organizame.ui.alarma.PantallaAlarmaActividad
 
 class ServicioAlarma : Service() {
 

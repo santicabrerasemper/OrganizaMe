@@ -1,5 +1,7 @@
 package com.santi.organizame
 
+import com.santi.organizame.data.recordatorios.ProgramadorRecordatorios
+
 import com.santi.organizame.modelo.AnticipacionRecordatorio
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

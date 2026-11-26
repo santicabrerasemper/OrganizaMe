@@ -1,4 +1,4 @@
-package com.santi.organizame
+package com.santi.organizame.ui.formulario
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
@@ -14,6 +14,8 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.santi.organizame.R
+import com.santi.organizame.data.recordatorios.ProgramadorRecordatorios
 import com.santi.organizame.databinding.ActividadNuevaTareaBinding
 import com.santi.organizame.domain.recordatorios.ResultadoProgramacionRecordatorio
 import com.santi.organizame.modelo.Actividad
