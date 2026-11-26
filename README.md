@@ -46,11 +46,23 @@ El listado permite ordenar por fecha y hora, prioridad, título o fecha de creac
 - Kotlin
 - Android nativo con layouts XML
 - View Binding
-- Separación por capas entre pantallas, parser/filtros, repositorios y persistencia
+- MVVM con `ViewModel`, `StateFlow` y efectos de una sola emisión
+- Clean Architecture liviana con capas `ui`, `domain` y `data`
 - Room sobre SQLite
 - AlarmManager para los recordatorios locales
 - Storage Access Framework para exportar e importar respaldos
 - Pruebas unitarias e instrumentadas
+
+## Arquitectura
+
+La aplicación usa MVVM sobre una separación por capas:
+
+- `ui`: Activities, estados de pantalla, efectos, ViewModels y sus factories.
+- `domain`: interfaces de repositorio y casos de uso para actividades, categorías, parser, recordatorios y respaldos.
+- `data`: implementaciones de repositorios con Room y adaptadores de servicios Android.
+- `modelo`, `parser`, `filtros`, `resumen` y `respaldo`: entidades y lógica pura reutilizada por los casos de uso.
+
+Las Activities ya no consultan Room directamente. Observan `StateFlow` respetando el ciclo de vida, delegan las operaciones a sus ViewModels y reciben eventos puntuales mediante `SharedFlow`. Las dependencias se construyen en factories pequeñas, sin incorporar todavía un framework de inyección.
 
 ## Gramática rápida del parser
 

@@ -7,24 +7,31 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.santi.organizame.modelo.Actividad
-import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.EstadoTarea
-import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.Recurrencia
 import com.santi.organizame.modelo.TipoActividad
 import com.santi.organizame.resumen.CalculadorResumenSemanal
+import com.santi.organizame.ui.consulta.ConsultaActividadesViewModel
+import com.santi.organizame.ui.consulta.ConsultaActividadesViewModelFactory
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 class ResumenSemanalActividad : AppCompatActivity() {
 
-    private lateinit var repositorio: ActividadRepository
+    private val viewModel: ConsultaActividadesViewModel by viewModels {
+        ConsultaActividadesViewModelFactory(applicationContext)
+    }
     private var actividades: List<Actividad> = emptyList()
     private var inicioSemana = CalculadorResumenSemanal.inicioDeSemana(LocalDate.now())
 
@@ -32,10 +39,6 @@ class ResumenSemanalActividad : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_resumen_semanal)
         aplicarInsets()
-
-        repositorio = ActividadRepository(
-            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
-        )
 
         findViewById<Button>(R.id.btnVolverResumen).setOnClickListener { finish() }
         findViewById<Button>(R.id.btnSemanaAnterior).setOnClickListener {
@@ -50,21 +53,33 @@ class ResumenSemanalActividad : AppCompatActivity() {
             inicioSemana = inicioSemana.plusWeeks(1)
             mostrarResumen()
         }
+        observarViewModel()
     }
 
     override fun onResume() {
         super.onResume()
-        repositorio.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado.onSuccess {
-                    actividades = it
-                    mostrarResumen()
-                }.onFailure {
-                    Toast.makeText(
-                        this,
-                        "No se pudo generar el resumen semanal",
-                        Toast.LENGTH_LONG
-                    ).show()
+        viewModel.cargar()
+    }
+
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.estado.collect { estado ->
+                        if (estado.cargaCompletada) {
+                            actividades = estado.actividades
+                            mostrarResumen()
+                        }
+                    }
+                }
+                launch {
+                    viewModel.errores.collect {
+                        Toast.makeText(
+                            this@ResumenSemanalActividad,
+                            "No se pudo generar el resumen semanal",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
         }

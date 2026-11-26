@@ -1,48 +1,76 @@
 package com.santi.organizame
 
-import android.os.Bundle
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.santi.organizame.databinding.ActividadNuevaTareaBinding
+import com.santi.organizame.domain.recordatorios.ResultadoProgramacionRecordatorio
 import com.santi.organizame.modelo.Actividad
+import com.santi.organizame.modelo.AnticipacionRecordatorio
+import com.santi.organizame.modelo.Categoria
 import com.santi.organizame.modelo.EstadoTarea
 import com.santi.organizame.modelo.Prioridad
+import com.santi.organizame.modelo.Recurrencia
 import com.santi.organizame.modelo.TipoActividad
-import android.widget.ArrayAdapter
-import android.widget.AdapterView
-import com.santi.organizame.modelo.Categoria
-import com.santi.organizame.modelo.AnticipacionRecordatorio
+import com.santi.organizame.ui.formulario.FormularioActividadEfecto
+import com.santi.organizame.ui.formulario.FormularioActividadUiState
+import com.santi.organizame.ui.formulario.FormularioActividadViewModel
+import com.santi.organizame.ui.formulario.FormularioActividadViewModelFactory
+import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.ResolverStyle
-import android.widget.Toast
-import android.view.View
-import java.time.Instant
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.santi.organizame.modelo.CategoriaRepository
-import com.santi.organizame.modelo.ActividadRepository
-import com.santi.organizame.modelo.OrganizaMeDatabase
-import com.santi.organizame.modelo.Recurrencia
+import kotlinx.coroutines.launch
 
 class NuevaTareaActividad : AppCompatActivity() {
 
     private lateinit var binding: ActividadNuevaTareaBinding
-    private lateinit var repositorio: ActividadRepository
+    private val viewModel: FormularioActividadViewModel by viewModels {
+        FormularioActividadViewModelFactory(applicationContext)
+    }
+
     private var actividadEditando: Actividad? = null
+    private var categorias: List<Categoria?> = listOf(null)
+    private lateinit var adaptadorCategorias: ArrayAdapter<String>
+    private val tiposActividad = TipoActividad.values().toList()
+    private var datosInicialesAplicados = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActividadNuevaTareaBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        configurarInsets()
 
+        binding.btnVolverNuevaTarea.setOnClickListener { finish() }
+        configurarSelectoresFechaHora()
+        configurarSelectores()
+        aplicarDatosDelParser()
 
+        binding.btnGuardarTarea.isEnabled = false
+        binding.categoriaTarea.isEnabled = false
+        binding.btnGuardarTarea.setOnClickListener { guardarActividad() }
+
+        observarViewModel()
+        val actividadId = intent.getLongExtra(EXTRA_ACTIVIDAD_ID, -1L)
+        viewModel.cargar(actividadId.takeIf { it != -1L })
+    }
+
+    private fun configurarInsets() {
         val vista = binding.root
-
         val izquierda = vista.paddingLeft
         val arriba = vista.paddingTop
         val derecha = vista.paddingRight
@@ -50,174 +78,51 @@ class NuevaTareaActividad : AppCompatActivity() {
 
         ViewCompat.setOnApplyWindowInsetsListener(vista) { _, insets ->
             val barras = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-
             vista.setPadding(
                 izquierda + barras.left,
                 arriba + barras.top,
                 derecha + barras.right,
                 abajo + barras.bottom
             )
-
             insets
         }
-
         ViewCompat.requestApplyInsets(vista)
+    }
 
-
-        binding.btnVolverNuevaTarea.setOnClickListener {
-            finish()
-        }
-
-        configurarSelectoresFechaHora()
-
-        val tiposActividad = TipoActividad.values().toList()
-
-        val nombresTipos = tiposActividad.map { tipo ->
-            if (tipo == TipoActividad.TAREA) "Tarea" else "Evento"
-        }
-
-        val adaptadorTipos = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            nombresTipos
+    private fun configurarSelectores() {
+        binding.tipoActividad.adapter = crearAdaptador(
+            tiposActividad.map { if (it == TipoActividad.TAREA) "Tarea" else "Evento" }
         )
 
-        adaptadorTipos.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
+        binding.prioridadTarea.adapter = crearAdaptador(
+            Prioridad.values().map { it.name }
         )
-
-        binding.tipoActividad.adapter = adaptadorTipos
-
-        repositorio = ActividadRepository(
-            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
-        )
-
-        val prioridades = Prioridad.values().map { it.name }
-
-        val adaptadorPrioridades = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            prioridades
-        )
-
-        adaptadorPrioridades.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-
-        binding.prioridadTarea.adapter = adaptadorPrioridades
-
         binding.prioridadTarea.setSelection(
             Prioridad.values().indexOf(Prioridad.MEDIA)
         )
 
-        var categorias: List<Categoria?> = listOf(null)
-        val categoriaParserId = intent.getLongExtra(EXTRA_PARSER_CATEGORIA_ID, -1L)
-
-        val adaptadorCategorias = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            mutableListOf("Sin categoría")
-        )
-
-        adaptadorCategorias.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-
+        adaptadorCategorias = crearAdaptador(listOf("Sin categoría"))
         binding.categoriaTarea.adapter = adaptadorCategorias
 
-// Repositorio para consultar las categorías de Room
-        val categoriaRepository = CategoriaRepository(
-            OrganizaMeDatabase.obtener(applicationContext).categoriaDao()
+        binding.recordatorioTarea.adapter = crearAdaptador(
+            listOf(
+                "Sin recordatorio",
+                "A la hora",
+                "10 minutos antes",
+                "30 minutos antes",
+                "1 hora antes",
+                "1 día antes"
+            )
         )
 
-// Evitamos guardar hasta terminar de cargar las categorías
-        binding.btnGuardarTarea.isEnabled = false
-        binding.categoriaTarea.isEnabled = false
-
-        categoriaRepository.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado
-                    .onSuccess { categoriasGuardadas ->
-
-                        categorias = listOf(null) + categoriasGuardadas
-
-                        adaptadorCategorias.clear()
-                        adaptadorCategorias.addAll(
-                            categorias.map { it?.nombre ?: "Sin categoría" }
-                        )
-                        adaptadorCategorias.notifyDataSetChanged()
-
-                        // Si estamos editando, recuperar la categoría seleccionada
-                        actividadEditando?.let { actividad ->
-                            val posicion = categorias.indexOfFirst {
-                                it?.id == actividad.categoriaId
-                            }
-
-                            binding.categoriaTarea.setSelection(
-                                if (posicion >= 0) posicion else 0
-                            )
-                        }
-
-                        if (actividadEditando == null && categoriaParserId >= 0L) {
-                            val posicion = categorias.indexOfFirst {
-                                it?.id == categoriaParserId
-                            }
-                            binding.categoriaTarea.setSelection(
-                                if (posicion >= 0) posicion else 0
-                            )
-                        }
-
-                        binding.categoriaTarea.isEnabled = true
-                        binding.btnGuardarTarea.isEnabled = true
-                    }
-                    .onFailure {
-                        Toast.makeText(
-                            this,
-                            "No se pudieron cargar las categorías",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-            }
-        }
-
-
-        val opcionesRecordatorio = listOf(
-            "Sin recordatorio",
-            "A la hora",
-            "10 minutos antes",
-            "30 minutos antes",
-            "1 hora antes",
-            "1 día antes"
+        binding.recurrenciaTarea.adapter = crearAdaptador(
+            listOf(
+                "No repetir",
+                "Todos los días",
+                "Todas las semanas",
+                "Todos los meses"
+            )
         )
-
-        val adaptadorRecordatorio = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            opcionesRecordatorio
-        )
-
-        adaptadorRecordatorio.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-
-        binding.recordatorioTarea.adapter = adaptadorRecordatorio
-
-        val opcionesRecurrencia = listOf(
-            "No repetir",
-            "Todos los días",
-            "Todas las semanas",
-            "Todos los meses"
-        )
-
-        val adaptadorRecurrencia = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            opcionesRecurrencia
-        )
-        adaptadorRecurrencia.setDropDownViewResource(
-            android.R.layout.simple_spinner_dropdown_item
-        )
-        binding.recurrenciaTarea.adapter = adaptadorRecurrencia
 
         binding.tipoActividad.onItemSelectedListener =
             object : AdapterView.OnItemSelectedListener {
@@ -227,7 +132,7 @@ class NuevaTareaActividad : AppCompatActivity() {
                     position: Int,
                     id: Long
                 ) {
-                    val esTarea = TipoActividad.values()[position] == TipoActividad.TAREA
+                    val esTarea = tiposActividad[position] == TipoActividad.TAREA
                     binding.recurrenciaTarea.isEnabled = esTarea
                     binding.ayudaRecurrencia.visibility =
                         if (esTarea) View.VISIBLE else View.GONE
@@ -236,353 +141,272 @@ class NuevaTareaActividad : AppCompatActivity() {
 
                 override fun onNothingSelected(parent: AdapterView<*>?) = Unit
             }
+    }
 
-        if (intent.hasExtra(EXTRA_PARSER_TEXTO_ORIGINAL)) {
-            val textoOriginal = intent.getStringExtra(EXTRA_PARSER_TEXTO_ORIGINAL).orEmpty()
-            val advertencias =
-                intent.getStringArrayListExtra(EXTRA_PARSER_ADVERTENCIAS).orEmpty()
+    private fun crearAdaptador(elementos: List<String>): ArrayAdapter<String> =
+        ArrayAdapter(
+            this,
+            android.R.layout.simple_spinner_item,
+            elementos.toMutableList()
+        ).also {
+            it.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        }
 
-            binding.resumenInterpretacion.visibility = View.VISIBLE
-            binding.tituloFormulario.text = "Revisar interpretación"
-            binding.resumenInterpretacion.text = buildString {
-                append("Frase interpretada: “").append(textoOriginal).append("”")
-                append("\n\nRevisá todos los campos antes de guardar.")
-                if (advertencias.isNotEmpty()) {
-                    append("\n\nAdvertencias:")
-                    advertencias.forEach { append("\n• ").append(it) }
-                }
+    private fun aplicarDatosDelParser() {
+        if (!intent.hasExtra(EXTRA_PARSER_TEXTO_ORIGINAL)) return
+
+        val textoOriginal = intent.getStringExtra(EXTRA_PARSER_TEXTO_ORIGINAL).orEmpty()
+        val advertencias =
+            intent.getStringArrayListExtra(EXTRA_PARSER_ADVERTENCIAS).orEmpty()
+
+        binding.resumenInterpretacion.visibility = View.VISIBLE
+        binding.tituloFormulario.text = "Revisar interpretación"
+        binding.resumenInterpretacion.text = buildString {
+            append("Frase interpretada: “").append(textoOriginal).append("”")
+            append("\n\nRevisá todos los campos antes de guardar.")
+            if (advertencias.isNotEmpty()) {
+                append("\n\nAdvertencias:")
+                advertencias.forEach { append("\n• ").append(it) }
             }
+        }
 
-            binding.tituloTarea.setText(
-                intent.getStringExtra(EXTRA_PARSER_TITULO).orEmpty()
-            )
-            binding.descripcionTarea.setText(
-                intent.getStringExtra(EXTRA_PARSER_DESCRIPCION).orEmpty()
-            )
+        binding.tituloTarea.setText(intent.getStringExtra(EXTRA_PARSER_TITULO).orEmpty())
+        binding.descripcionTarea.setText(
+            intent.getStringExtra(EXTRA_PARSER_DESCRIPCION).orEmpty()
+        )
 
-            intent.getStringExtra(EXTRA_PARSER_RECORDATORIO)
-                ?.let {
-                    runCatching {
-                        AnticipacionRecordatorio.valueOf(it)
-                    }.getOrNull()
-                }
-                ?.let { recordatorio ->
-                    val posicion = when (recordatorio) {
+        intent.getStringExtra(EXTRA_PARSER_RECORDATORIO)
+            ?.let { runCatching { AnticipacionRecordatorio.valueOf(it) }.getOrNull() }
+            ?.let { recordatorio ->
+                binding.recordatorioTarea.setSelection(
+                    when (recordatorio) {
                         AnticipacionRecordatorio.A_LA_HORA -> 1
                         AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> 2
                         AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> 3
                         AnticipacionRecordatorio.UNA_HORA_ANTES -> 4
                         AnticipacionRecordatorio.UN_DIA_ANTES -> 5
                     }
+                )
+            }
 
-                    binding.recordatorioTarea.setSelection(posicion)
-                }
+        intent.getStringExtra(EXTRA_PARSER_TIPO)
+            ?.let { runCatching { TipoActividad.valueOf(it) }.getOrNull() }
+            ?.let { binding.tipoActividad.setSelection(tiposActividad.indexOf(it)) }
+        intent.getStringExtra(EXTRA_PARSER_FECHA)
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+            ?.let { binding.fechaTarea.setText(it.format(FORMATO_FECHA)) }
+        intent.getStringExtra(EXTRA_PARSER_HORA)
+            ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
+            ?.let { binding.horaTarea.setText(it.format(FORMATO_HORA)) }
+        intent.getStringExtra(EXTRA_PARSER_PRIORIDAD)
+            ?.let { runCatching { Prioridad.valueOf(it) }.getOrNull() }
+            ?.let { binding.prioridadTarea.setSelection(Prioridad.values().indexOf(it)) }
 
-            intent.getStringExtra(EXTRA_PARSER_TIPO)
-                ?.let { runCatching { TipoActividad.valueOf(it) }.getOrNull() }
-                ?.let { binding.tipoActividad.setSelection(tiposActividad.indexOf(it)) }
+        binding.btnGuardarTarea.text = "Confirmar y guardar"
+    }
 
-            intent.getStringExtra(EXTRA_PARSER_FECHA)
-                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
-                ?.let { binding.fechaTarea.setText(it.format(FORMATO_FECHA)) }
-
-            intent.getStringExtra(EXTRA_PARSER_HORA)
-                ?.let { runCatching { LocalTime.parse(it) }.getOrNull() }
-                ?.let { binding.horaTarea.setText(it.format(FORMATO_HORA)) }
-
-            intent.getStringExtra(EXTRA_PARSER_PRIORIDAD)
-                ?.let { runCatching { Prioridad.valueOf(it) }.getOrNull() }
-                ?.let { binding.prioridadTarea.setSelection(Prioridad.values().indexOf(it)) }
-
-            binding.btnGuardarTarea.text = "Confirmar y guardar"
-        }
-
-        val actividadId = intent.getLongExtra("actividadId", -1L)
-
-        if (actividadId != -1L) {
-            repositorio.obtenerPorId(actividadId) { resultado ->
-                runOnUiThread {
-                    resultado
-                        .onSuccess { actividad ->
-                            if (actividad != null) {
-                                actividadEditando = actividad
-
-                                binding.tipoActividad.setSelection(
-                                    tiposActividad.indexOf(actividad.tipo)
-                                )
-
-                                binding.tituloTarea.setText(actividad.titulo)
-                                binding.descripcionTarea.setText(actividad.descripcion ?: "")
-
-                                binding.fechaTarea.setText(
-                                    actividad.fecha?.format(FORMATO_FECHA) ?: ""
-                                )
-
-                                binding.horaTarea.setText(
-                                    actividad.hora?.format(FORMATO_HORA) ?: ""
-                                )
-
-                                binding.prioridadTarea.setSelection(
-                                    Prioridad.values().indexOf(actividad.prioridad)
-                                )
-
-                                val posicionCategoria = categorias.indexOfFirst {
-                                    it?.id == actividad.categoriaId
-                                }
-
-                                binding.categoriaTarea.setSelection(
-                                    if (posicionCategoria >= 0) posicionCategoria else 0
-                                )
-
-                                val posicionRecordatorio =
-                                    when (actividad.recordatorio) {
-                                        AnticipacionRecordatorio.A_LA_HORA -> 1
-                                        AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> 2
-                                        AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> 3
-                                        AnticipacionRecordatorio.UNA_HORA_ANTES -> 4
-                                        AnticipacionRecordatorio.UN_DIA_ANTES -> 5
-                                        null -> 0
-                                    }
-
-                                binding.recordatorioTarea.setSelection(posicionRecordatorio)
-                                binding.recurrenciaTarea.setSelection(
-                                    Recurrencia.values().indexOf(actividad.recurrencia)
-                                )
-
-                                binding.btnGuardarTarea.text = "Guardar cambios"
-                                binding.tituloFormulario.text = "Editar actividad"
-                            }
-                        }
-                        .onFailure {
-                            Toast.makeText(
-                                this,
-                                "No se pudo cargar la actividad",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                }
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { viewModel.estado.collect(::renderizarEstado) }
+                launch { viewModel.efectos.collect(::procesarEfecto) }
             }
         }
+    }
 
-        binding.btnGuardarTarea.setOnClickListener {
+    private fun renderizarEstado(estado: FormularioActividadUiState) {
+        val nuevasCategorias: List<Categoria?> = listOf(null) + estado.categorias
+        val nuevosNombres = nuevasCategorias.map { it?.nombre ?: "Sin categoría" }
+        if (nuevosNombres != categorias.map { it?.nombre ?: "Sin categoría" }) {
+            categorias = nuevasCategorias
+            adaptadorCategorias.clear()
+            adaptadorCategorias.addAll(nuevosNombres)
+            adaptadorCategorias.notifyDataSetChanged()
+        }
 
-            val titulo = binding.tituloTarea.text.toString()
-            val descripcion = binding.descripcionTarea.text.toString()
-            val fecha = binding.fechaTarea.text.toString()
-            val hora = binding.horaTarea.text.toString()
-            val prioridadSeleccionada =
-                Prioridad.valueOf(binding.prioridadTarea.selectedItem.toString())
-            val categoriaSeleccionada =
-                categorias[binding.categoriaTarea.selectedItemPosition]
-            val tipoSeleccionado =
-                TipoActividad.values()[binding.tipoActividad.selectedItemPosition]
-            val recurrenciaSeleccionada =
-                Recurrencia.values()[binding.recurrenciaTarea.selectedItemPosition]
-            val recordatorioSeleccionado =
-                when (binding.recordatorioTarea.selectedItemPosition) {
+        if (estado.cargaCompletada && !datosInicialesAplicados) {
+            datosInicialesAplicados = true
+            actividadEditando = estado.actividad
+            estado.actividad?.let(::aplicarActividadEditada)
+                ?: seleccionarCategoriaDelParser()
+        }
 
-                    1 -> AnticipacionRecordatorio.A_LA_HORA
-                    2 -> AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES
-                    3 -> AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES
-                    4 -> AnticipacionRecordatorio.UNA_HORA_ANTES
-                    5 -> AnticipacionRecordatorio.UN_DIA_ANTES
+        val formularioDisponible = estado.cargaCompletada && !estado.guardando
+        binding.btnGuardarTarea.isEnabled = formularioDisponible
+        binding.categoriaTarea.isEnabled = formularioDisponible
+    }
 
-                    else -> null
+    private fun aplicarActividadEditada(actividad: Actividad) {
+        binding.tipoActividad.setSelection(tiposActividad.indexOf(actividad.tipo))
+        binding.tituloTarea.setText(actividad.titulo)
+        binding.descripcionTarea.setText(actividad.descripcion.orEmpty())
+        binding.fechaTarea.setText(actividad.fecha?.format(FORMATO_FECHA).orEmpty())
+        binding.horaTarea.setText(actividad.hora?.format(FORMATO_HORA).orEmpty())
+        binding.prioridadTarea.setSelection(
+            Prioridad.values().indexOf(actividad.prioridad)
+        )
+        seleccionarCategoria(actividad.categoriaId)
+        binding.recordatorioTarea.setSelection(
+            when (actividad.recordatorio) {
+                AnticipacionRecordatorio.A_LA_HORA -> 1
+                AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> 2
+                AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> 3
+                AnticipacionRecordatorio.UNA_HORA_ANTES -> 4
+                AnticipacionRecordatorio.UN_DIA_ANTES -> 5
+                null -> 0
+            }
+        )
+        binding.recurrenciaTarea.setSelection(
+            Recurrencia.values().indexOf(actividad.recurrencia)
+        )
+        binding.btnGuardarTarea.text = "Guardar cambios"
+        binding.tituloFormulario.text = "Editar actividad"
+    }
+
+    private fun seleccionarCategoriaDelParser() {
+        val categoriaParserId = intent.getLongExtra(EXTRA_PARSER_CATEGORIA_ID, -1L)
+        if (categoriaParserId >= 0L) seleccionarCategoria(categoriaParserId)
+    }
+
+    private fun seleccionarCategoria(categoriaId: Long?) {
+        val posicion = categorias.indexOfFirst { it?.id == categoriaId }
+        binding.categoriaTarea.setSelection(if (posicion >= 0) posicion else 0)
+    }
+
+    private fun procesarEfecto(efecto: FormularioActividadEfecto) {
+        when (efecto) {
+            is FormularioActividadEfecto.Guardada -> {
+                if (efecto.programacion == ResultadoProgramacionRecordatorio.APROXIMADO) {
+                    Toast.makeText(
+                        this,
+                        "Permití alarmas exactas para recibir el recordatorio a la hora indicada",
+                        Toast.LENGTH_LONG
+                    ).show()
+                    ProgramadorRecordatorios(applicationContext)
+                        .solicitarAccesoAlarmasExactas()
                 }
-
-            // Validar título
-            if (titulo.isBlank()) {
-                binding.tituloTarea.error = "El título es obligatorio"
-                return@setOnClickListener
+                setResult(RESULT_OK)
+                finish()
             }
 
-            if(tipoSeleccionado == TipoActividad.EVENTO && fecha.isBlank()){
-                binding.fechaTarea.error = "La fecha es obligatoria para un evento"
-                return@setOnClickListener
+            is FormularioActividadEfecto.Mensaje -> {
+                Toast.makeText(this, efecto.texto, Toast.LENGTH_LONG).show()
             }
+        }
+    }
 
-            if (recurrenciaSeleccionada != Recurrencia.SIN_REPETICION &&
-                (tipoSeleccionado != TipoActividad.TAREA || fecha.isBlank())
-            ) {
-                binding.fechaTarea.error =
-                    "Una tarea repetitiva necesita una fecha inicial"
-                return@setOnClickListener
-            }
+    private fun guardarActividad() {
+        val titulo = binding.tituloTarea.text.toString()
+        val descripcion = binding.descripcionTarea.text.toString()
+        val fechaTexto = binding.fechaTarea.text.toString()
+        val horaTexto = binding.horaTarea.text.toString()
+        val prioridad = Prioridad.values()[binding.prioridadTarea.selectedItemPosition]
+        val categoria = categorias.getOrNull(binding.categoriaTarea.selectedItemPosition)
+        val tipo = tiposActividad[binding.tipoActividad.selectedItemPosition]
+        val recurrencia = Recurrencia.values()[binding.recurrenciaTarea.selectedItemPosition]
+        val recordatorio = recordatorioSeleccionado()
 
-// Si hay hora, tiene que haber fecha
-            if (hora.isNotBlank() && fecha.isBlank()) {
-                binding.fechaTarea.error = "Tenés que ingresar una fecha"
-                return@setOnClickListener
-            }
+        if (titulo.isBlank()) {
+            binding.tituloTarea.error = "El título es obligatorio"
+            return
+        }
+        if (tipo == TipoActividad.EVENTO && fechaTexto.isBlank()) {
+            binding.fechaTarea.error = "La fecha es obligatoria para un evento"
+            return
+        }
+        if (recurrencia != Recurrencia.SIN_REPETICION &&
+            (tipo != TipoActividad.TAREA || fechaTexto.isBlank())
+        ) {
+            binding.fechaTarea.error = "Una tarea repetitiva necesita una fecha inicial"
+            return
+        }
+        if (horaTexto.isNotBlank() && fechaTexto.isBlank()) {
+            binding.fechaTarea.error = "Tenés que ingresar una fecha"
+            return
+        }
+        if (recordatorio != null && (fechaTexto.isBlank() || horaTexto.isBlank())) {
+            binding.fechaTarea.error = "El recordatorio necesita fecha y hora"
+            binding.horaTarea.error = "El recordatorio necesita fecha y hora"
+            return
+        }
 
-// Si hay recordatorio, tiene que haber fecha y hora
-            if (recordatorioSeleccionado != null &&
-                (fecha.isBlank() || hora.isBlank())
-            ) {
-                binding.fechaTarea.error = "El recordatorio necesita fecha y hora"
-                binding.horaTarea.error = "El recordatorio necesita fecha y hora"
-                return@setOnClickListener
-            }
+        val fecha = convertirFecha(fechaTexto) ?: if (fechaTexto.isNotBlank()) {
+            binding.fechaTarea.error = "Usá el formato dd/MM/aaaa"
+            return
+        } else null
+        val hora = convertirHora(horaTexto) ?: if (horaTexto.isNotBlank()) {
+            binding.horaTarea.error = "Usá el formato HH:mm"
+            return
+        } else null
+        val momentoRecordatorio = ProgramadorRecordatorios.calcularMomentoAviso(
+            fecha,
+            hora,
+            recordatorio
+        )
 
-            val fechaConvertida = convertirFecha(fecha) ?: if (fecha.isNotBlank()) {
-                binding.fechaTarea.error = "Usá el formato dd/MM/aaaa"
-                return@setOnClickListener
-            } else {
-                null
-            }
+        if (recordatorio != null &&
+            (momentoRecordatorio == null || !momentoRecordatorio.isAfter(Instant.now()))
+        ) {
+            binding.fechaTarea.error = "El momento del recordatorio ya pasó"
+            binding.horaTarea.error = "Elegí una fecha y hora futuras"
+            return
+        }
 
-            val horaConvertida = convertirHora(hora) ?: if (hora.isNotBlank()) {
-                binding.horaTarea.error = "Usá el formato HH:mm"
-                return@setOnClickListener
-            } else {
-                null
-            }
-
-            val momentoRecordatorio = ProgramadorRecordatorios.calcularMomentoAviso(
-                fechaConvertida,
-                horaConvertida,
-                recordatorioSeleccionado
+        val original = actividadEditando
+        val actividad = if (original == null) {
+            Actividad(
+                tipo = tipo,
+                titulo = titulo,
+                descripcion = descripcion,
+                fecha = fecha,
+                hora = hora,
+                prioridad = prioridad,
+                categoriaId = categoria?.id,
+                recordatorio = recordatorio,
+                fechaRecordatorioProgramado = momentoRecordatorio,
+                recurrencia = recurrencia,
+                estadoTarea = if (tipo == TipoActividad.TAREA) {
+                    EstadoTarea.PENDIENTE
+                } else null
             )
-
-            if (recordatorioSeleccionado != null &&
-                (momentoRecordatorio == null || !momentoRecordatorio.isAfter(Instant.now()))
-            ) {
-                binding.fechaTarea.error = "El momento del recordatorio ya pasó"
-                binding.horaTarea.error = "Elegí una fecha y hora futuras"
-                return@setOnClickListener
-            }
-
-
-            binding.btnGuardarTarea.isEnabled = false
-
-            if (actividadEditando == null) {
-
-                // CREAR una tarea nueva
-                val nuevaActividad = Actividad(
-                    tipo = tipoSeleccionado,
-                    titulo = titulo,
-                    descripcion = descripcion,
-                    fecha = fechaConvertida,
-                    hora = horaConvertida,
-                    prioridad = prioridadSeleccionada,
-                    categoriaId = categoriaSeleccionada?.id,
-                    recordatorio = recordatorioSeleccionado,
-                    fechaRecordatorioProgramado = momentoRecordatorio,
-                    recurrencia = recurrenciaSeleccionada,
-                    estadoTarea =
-                        if (tipoSeleccionado == TipoActividad.TAREA) {
-                            EstadoTarea.PENDIENTE
-                        } else {
-                            null
-                        }
-                )
-
-                repositorio.guardar(nuevaActividad) { resultado ->
-                    runOnUiThread {
-                        resultado
-                            .onSuccess { idGuardado ->
-
-                                val actividadGuardada = nuevaActividad.copy(
-                                    id = idGuardado
-                                )
-
-                                programarRecordatorio(actividadGuardada)
-
-                                setResult(RESULT_OK)
-                                finish()
-                            }
-                            .onFailure {
-                                binding.btnGuardarTarea.isEnabled = true
-
-                                Toast.makeText(
-                                    this,
-                                    "No se pudo guardar la actividad",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                    }
-                }
-
-            } else {
-
-                val actividadOriginal = actividadEditando!!
-                val esTarea = tipoSeleccionado == TipoActividad.TAREA
-
-                val actividadActualizada = actividadOriginal.copy(
-                    tipo = tipoSeleccionado,
-                    titulo = titulo,
-                    descripcion = descripcion,
-                    fecha = fechaConvertida,
-                    hora = horaConvertida,
-                    prioridad = prioridadSeleccionada,
-                    categoriaId = categoriaSeleccionada?.id,
-                    recordatorio = recordatorioSeleccionado,
-                    recurrencia =
-                        if (esTarea) recurrenciaSeleccionada
-                        else Recurrencia.SIN_REPETICION,
-                    recurrenciaProcesada =
-                        if (actividadOriginal.estadoTarea == EstadoTarea.COMPLETADA) {
-                            actividadOriginal.recurrenciaProcesada
-                        } else {
-                            false
-                        },
-                    estadoTarea =
-                        if (esTarea) {
-                            actividadOriginal.estadoTarea ?: EstadoTarea.PENDIENTE
-                        } else {
-                            null
-                        },
-                    fechaCompletada =
-                        if (esTarea) actividadOriginal.fechaCompletada else null,
-                    fechaRecordatorioProgramado =
-                        if (esTarea &&
-                            actividadOriginal.estadoTarea == EstadoTarea.COMPLETADA
-                        ) {
-                            null
-                        } else {
-                            momentoRecordatorio
-                        },
-                    fechaModificacion = Instant.now()
-                )
-
-                repositorio.actualizar(actividadActualizada) { resultado ->
-                    runOnUiThread {
-                        resultado
-                            .onSuccess {
-
-                                programarRecordatorio(actividadActualizada)
-
-                                setResult(RESULT_OK)
-                                finish()
-                            }
-                            .onFailure {
-                                binding.btnGuardarTarea.isEnabled = true
-
-                                Toast.makeText(
-                                    this,
-                                    "No se pudo actualizar la actividad",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                    }
-                }
-            }
+        } else {
+            val esTarea = tipo == TipoActividad.TAREA
+            original.copy(
+                tipo = tipo,
+                titulo = titulo,
+                descripcion = descripcion,
+                fecha = fecha,
+                hora = hora,
+                prioridad = prioridad,
+                categoriaId = categoria?.id,
+                recordatorio = recordatorio,
+                recurrencia = if (esTarea) recurrencia else Recurrencia.SIN_REPETICION,
+                recurrenciaProcesada = if (original.estadoTarea == EstadoTarea.COMPLETADA) {
+                    original.recurrenciaProcesada
+                } else false,
+                estadoTarea = if (esTarea) {
+                    original.estadoTarea ?: EstadoTarea.PENDIENTE
+                } else null,
+                fechaCompletada = if (esTarea) original.fechaCompletada else null,
+                fechaRecordatorioProgramado = if (
+                    esTarea && original.estadoTarea == EstadoTarea.COMPLETADA
+                ) null else momentoRecordatorio,
+                fechaModificacion = Instant.now()
+            )
         }
+
+        viewModel.guardar(actividad)
     }
 
-    private fun programarRecordatorio(actividad: Actividad) {
-        val programador = ProgramadorRecordatorios(applicationContext)
-        val resultado = programador.programar(actividad)
-
-        if (resultado == ProgramadorRecordatorios.ResultadoProgramacion.APROXIMADO) {
-            Toast.makeText(
-                this,
-                "Permití alarmas exactas para recibir el recordatorio a la hora indicada",
-                Toast.LENGTH_LONG
-            ).show()
-            programador.solicitarAccesoAlarmasExactas()
+    private fun recordatorioSeleccionado(): AnticipacionRecordatorio? =
+        when (binding.recordatorioTarea.selectedItemPosition) {
+            1 -> AnticipacionRecordatorio.A_LA_HORA
+            2 -> AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES
+            3 -> AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES
+            4 -> AnticipacionRecordatorio.UNA_HORA_ANTES
+            5 -> AnticipacionRecordatorio.UN_DIA_ANTES
+            else -> null
         }
-    }
 
     private fun configurarSelectoresFechaHora() {
         binding.fechaTarea.setOnClickListener {
@@ -638,7 +462,6 @@ class NuevaTareaActividad : AppCompatActivity() {
         conversor: (CharSequence, DateTimeFormatter) -> T
     ): T? {
         if (valor.isBlank()) return null
-
         return try {
             conversor(valor.trim(), formato)
         } catch (_: DateTimeParseException) {
@@ -647,6 +470,7 @@ class NuevaTareaActividad : AppCompatActivity() {
     }
 
     companion object {
+        private const val EXTRA_ACTIVIDAD_ID = "actividadId"
         const val EXTRA_PARSER_TEXTO_ORIGINAL = "parserTextoOriginal"
         const val EXTRA_PARSER_TITULO = "parserTitulo"
         const val EXTRA_PARSER_TIPO = "parserTipo"
@@ -655,7 +479,6 @@ class NuevaTareaActividad : AppCompatActivity() {
         const val EXTRA_PARSER_PRIORIDAD = "parserPrioridad"
         const val EXTRA_PARSER_CATEGORIA_ID = "parserCategoriaId"
         const val EXTRA_PARSER_ADVERTENCIAS = "parserAdvertencias"
-
         const val EXTRA_PARSER_DESCRIPCION = "parserDescripcion"
         const val EXTRA_PARSER_RECORDATORIO = "parserRecordatorio"
 

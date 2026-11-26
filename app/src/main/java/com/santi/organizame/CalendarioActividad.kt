@@ -10,9 +10,12 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import android.widget.Toast
 import com.santi.organizame.modelo.Actividad
-import com.santi.organizame.modelo.ActividadRepository
+import androidx.activity.viewModels
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import android.graphics.Typeface
@@ -22,14 +25,18 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import com.santi.organizame.modelo.OrganizaMeDatabase
+import com.santi.organizame.ui.consulta.ConsultaActividadesViewModel
+import com.santi.organizame.ui.consulta.ConsultaActividadesViewModelFactory
+import kotlinx.coroutines.launch
 
 class CalendarioActividad : AppCompatActivity() {
 
     private lateinit var binding: ActivityCalendarioBinding
     private lateinit var adaptador: AdaptadorDiasCalendario
     private var mesActual: YearMonth = YearMonth.now()
-    private lateinit var actividadRepository: ActividadRepository
+    private val viewModel: ConsultaActividadesViewModel by viewModels {
+        ConsultaActividadesViewModelFactory(applicationContext)
+    }
     private var actividades: List<Actividad> = emptyList()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -72,10 +79,6 @@ class CalendarioActividad : AppCompatActivity() {
             finish()
         }
 
-        actividadRepository = ActividadRepository(
-            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
-        )
-
         adaptador = AdaptadorDiasCalendario(emptyList()) { fecha ->
             mostrarActividadesDelDia(fecha)
         }
@@ -92,7 +95,12 @@ class CalendarioActividad : AppCompatActivity() {
             mostrarMes(fechasConActividades())
         }
 
-        cargarActividades()
+        observarViewModel()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.cargar()
     }
 
     private fun mostrarMes(fechasConActividades: Set<LocalDate>) {
@@ -300,22 +308,26 @@ class CalendarioActividad : AppCompatActivity() {
             .show()
     }
 
-
-    private fun cargarActividades() {
-        actividadRepository.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado
-                    .onSuccess { lista ->
-                        actividades = lista
-                        mostrarMes(fechasConActividades())
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.estado.collect { estado ->
+                        if (estado.cargaCompletada) {
+                            actividades = estado.actividades
+                            mostrarMes(fechasConActividades())
+                        }
                     }
-                    .onFailure {
+                }
+                launch {
+                    viewModel.errores.collect { mensaje ->
                         Toast.makeText(
-                            this,
-                            "No se pudieron cargar las actividades",
+                            this@CalendarioActividad,
+                            mensaje,
                             Toast.LENGTH_LONG
                         ).show()
                     }
+                }
             }
         }
     }

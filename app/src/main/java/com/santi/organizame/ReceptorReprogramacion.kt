@@ -5,8 +5,14 @@ import android.content.Context
 import android.content.Intent
 import android.app.AlarmManager
 import android.util.Log
-import com.santi.organizame.modelo.ActividadRepository
+import com.santi.organizame.data.recordatorios.GestorRecordatoriosAndroid
+import com.santi.organizame.data.repository.RoomActividadRepository
+import com.santi.organizame.domain.usecase.ReprogramarRecordatoriosUseCase
 import com.santi.organizame.modelo.OrganizaMeDatabase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class ReceptorReprogramacion : BroadcastReceiver() {
 
@@ -19,24 +25,25 @@ class ReceptorReprogramacion : BroadcastReceiver() {
         }
 
         val resultadoPendiente = goAsync()
-        val repositorio = ActividadRepository(
+        val repositorio = RoomActividadRepository(
             OrganizaMeDatabase.obtener(context).actividadDao()
         )
+        val reprogramar = ReprogramarRecordatoriosUseCase(
+            repositorio,
+            GestorRecordatoriosAndroid(
+                ProgramadorRecordatorios(context.applicationContext)
+            )
+        )
 
-        repositorio.obtenerTodas { resultado ->
+        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
-                val programador = ProgramadorRecordatorios(context.applicationContext)
-                resultado
-                    .onSuccess { actividades ->
-                        actividades.forEach(programador::programar)
-                    }
-                    .onFailure { error ->
-                        Log.e(
-                            "OrganizaMeAvisos",
-                            "No se pudieron restaurar los recordatorios",
-                            error
-                        )
-                    }
+                reprogramar()
+            } catch (error: Throwable) {
+                Log.e(
+                    "OrganizaMeAvisos",
+                    "No se pudieron restaurar los recordatorios",
+                    error
+                )
             } finally {
                 resultadoPendiente.finish()
             }

@@ -7,22 +7,33 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.santi.organizame.modelo.Categoria
 import android.widget.LinearLayout
-import com.santi.organizame.modelo.CategoriaRepository
-import com.santi.organizame.modelo.OrganizaMeDatabase
+import com.santi.organizame.ui.categorias.CategoriasEfecto
+import com.santi.organizame.ui.categorias.CategoriasUiState
+import com.santi.organizame.ui.categorias.CategoriasViewModel
+import com.santi.organizame.ui.categorias.CategoriasViewModelFactory
+import kotlinx.coroutines.launch
 
 class CategoriasActividad : AppCompatActivity() {
 
-    private lateinit var categoriaRepository: CategoriaRepository
+    private val viewModel: CategoriasViewModel by viewModels {
+        CategoriasViewModelFactory(applicationContext)
+    }
     private lateinit var adaptador: AdaptadorTarjetasCategoria
     private lateinit var textoEstado: TextView
+    private var dialogoEdicion: AlertDialog? = null
+    private var botonGuardando: Button? = null
     private val coloresCategoria = listOf(
         "Verde" to "#0F766E",
         "Azul" to "#2563EB",
@@ -53,10 +64,6 @@ class CategoriasActividad : AppCompatActivity() {
 
         textoEstado = findViewById(R.id.textoEstadoCategorias)
 
-        categoriaRepository = CategoriaRepository(
-            OrganizaMeDatabase.obtener(applicationContext).categoriaDao()
-        )
-
         // Adaptador de las tarjetas
         adaptador = AdaptadorTarjetasCategoria(
             alEditar = { categoria ->
@@ -76,28 +83,48 @@ class CategoriasActividad : AppCompatActivity() {
             crearCategoria()
         }
 
-        cargarCategorias()
+        observarViewModel()
+        viewModel.cargar()
     }
 
-    // Consultar las categorías guardadas
-    private fun cargarCategorias() {
-        categoriaRepository.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado
-                    .onSuccess { categorias ->
-                        adaptador.actualizarLista(categorias)
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch { viewModel.estado.collect(::renderizarEstado) }
+                launch { viewModel.efectos.collect(::procesarEfecto) }
+            }
+        }
+    }
 
-                        if (categorias.isEmpty()) {
-                            textoEstado.visibility = View.VISIBLE
-                            textoEstado.text = "No hay categorías guardadas"
-                        } else {
-                            textoEstado.visibility = View.GONE
-                        }
-                    }
-                    .onFailure {
-                        textoEstado.visibility = View.VISIBLE
-                        textoEstado.text = "Error al cargar las categorías"
-                    }
+    private fun renderizarEstado(estado: CategoriasUiState) {
+        adaptador.actualizarLista(estado.categorias)
+        when {
+            estado.errorCarga -> {
+                textoEstado.visibility = View.VISIBLE
+                textoEstado.text = "Error al cargar las categorías"
+            }
+            !estado.cargando && estado.categorias.isEmpty() -> {
+                textoEstado.visibility = View.VISIBLE
+                textoEstado.text = "No hay categorías guardadas"
+            }
+            else -> textoEstado.visibility = View.GONE
+        }
+    }
+
+    private fun procesarEfecto(efecto: CategoriasEfecto) {
+        when (efecto) {
+            CategoriasEfecto.Guardado -> {
+                dialogoEdicion?.dismiss()
+                dialogoEdicion = null
+                botonGuardando = null
+            }
+            is CategoriasEfecto.Mensaje -> {
+                botonGuardando?.isEnabled = true
+                Toast.makeText(
+                    this,
+                    efecto.texto,
+                    if (efecto.corto) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                ).show()
             }
         }
     }
@@ -166,23 +193,9 @@ class CategoriasActividad : AppCompatActivity() {
 
                     botonGuardar.isEnabled = false
 
-                    categoriaRepository.guardar(nuevaCategoria) { resultado ->
-                        runOnUiThread {
-                            resultado
-                                .onSuccess {
-                                    dialogo.dismiss()
-                                    cargarCategorias()
-                                }
-                                .onFailure {
-                                    botonGuardar.isEnabled = true
-                                    Toast.makeText(
-                                        this,
-                                        "No se pudo guardar. Revisá si el nombre ya existe.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                        }
-                    }
+                    dialogoEdicion = dialogo
+                    botonGuardando = botonGuardar
+                    viewModel.guardar(nuevaCategoria)
                 }
             }
         }
@@ -263,23 +276,9 @@ class CategoriasActividad : AppCompatActivity() {
 
                     botonGuardar.isEnabled = false
 
-                    categoriaRepository.actualizar(categoriaActualizada) { resultado ->
-                        runOnUiThread {
-                            resultado
-                                .onSuccess {
-                                    dialogo.dismiss()
-                                    cargarCategorias()
-                                }
-                                .onFailure {
-                                    botonGuardar.isEnabled = true
-                                    Toast.makeText(
-                                        this,
-                                        "No se pudo actualizar la categoría.",
-                                        Toast.LENGTH_LONG
-                                    ).show()
-                                }
-                        }
-                    }
+                    dialogoEdicion = dialogo
+                    botonGuardando = botonGuardar
+                    viewModel.guardar(categoriaActualizada)
                 }
             }
         }
@@ -302,27 +301,7 @@ class CategoriasActividad : AppCompatActivity() {
             )
             .setPositiveButton("Eliminar") { _, _ ->
 
-                categoriaRepository.eliminar(categoria) { resultado ->
-
-                    runOnUiThread {
-                        resultado
-                            .onSuccess {
-                                cargarCategorias()
-                                Toast.makeText(
-                                    this,
-                                    "Categoría eliminada correctamente",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            .onFailure {
-                                Toast.makeText(
-                                    this,
-                                    "No se pudo eliminar la categoría",
-                                    Toast.LENGTH_LONG
-                                ).show()
-                            }
-                    }
-                }
+                viewModel.eliminar(categoria)
             }
             .setNegativeButton("Cancelar", null)
             .show()

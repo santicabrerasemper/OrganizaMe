@@ -12,6 +12,7 @@ import android.util.Log
 import com.santi.organizame.modelo.Actividad
 import com.santi.organizame.modelo.AnticipacionRecordatorio
 import com.santi.organizame.modelo.EstadoTarea
+import com.santi.organizame.domain.recordatorios.CalculadorMomentoRecordatorio
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -146,22 +147,12 @@ class ProgramadorRecordatorios(private val contexto: Context) {
             hora: LocalTime?,
             recordatorio: AnticipacionRecordatorio?,
             zona: ZoneId = ZoneId.systemDefault()
-        ): Instant? {
-            if (fecha == null || hora == null || recordatorio == null) return null
-
-            val minutosAntes = when (recordatorio) {
-                AnticipacionRecordatorio.A_LA_HORA -> 0L
-                AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES -> 10L
-                AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES -> 30L
-                AnticipacionRecordatorio.UNA_HORA_ANTES -> 60L
-                AnticipacionRecordatorio.UN_DIA_ANTES -> 1440L
-            }
-
-            return LocalDateTime.of(fecha, hora)
-                .minusMinutes(minutosAntes)
-                .atZone(zona)
-                .toInstant()
-        }
+        ): Instant? = CalculadorMomentoRecordatorio.calcular(
+            fecha = fecha,
+            hora = hora,
+            recordatorio = recordatorio,
+            zona = zona
+        )
 
         fun identificador(id: Long): Int = id.hashCode()
     }

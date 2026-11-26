@@ -9,27 +9,32 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.santi.organizame.databinding.ActivityMainBinding
 import com.santi.organizame.modelo.Actividad
-import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.AnticipacionRecordatorio
-import com.santi.organizame.modelo.CategoriaRepository
-import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.TipoActividad
-import com.santi.organizame.parser.ParserActividad
-import java.time.ZonedDateTime
 import androidx.appcompat.app.AppCompatDelegate
+import com.santi.organizame.parser.ResultadoParser
+import com.santi.organizame.ui.inicio.InicioEfecto
+import com.santi.organizame.ui.inicio.InicioViewModel
+import com.santi.organizame.ui.inicio.InicioViewModelFactory
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var actividadRepository: ActividadRepository
-    private lateinit var categoriaRepository: CategoriaRepository
+    private val viewModel: InicioViewModel by viewModels {
+        InicioViewModelFactory(applicationContext)
+    }
 
     // Abrir el formulario de tareas
     private val nuevaTareaLauncher =
@@ -59,7 +64,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-
         binding.btnModoOscuro.text =
             if (modoOscuro) "Desactivar modo oscuro"
             else "Activar modo oscuro"
@@ -83,15 +87,7 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-
-        // Repositorios
-        actividadRepository = ActividadRepository(
-            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
-        )
-
-        categoriaRepository = CategoriaRepository(
-            OrganizaMeDatabase.obtener(applicationContext).categoriaDao()
-        )
+        observarViewModel()
 
         // Configurar notificaciones
 
@@ -166,99 +162,86 @@ class MainActivity : AppCompatActivity() {
 
     // Interpretar una frase escrita por el usuario
     private fun interpretarFraseRapida() {
-
         val frase = binding.entradaRapida.text.toString().trim()
-
         if (frase.isBlank()) {
             binding.entradaRapida.error = "Ingresá una frase"
             return
         }
+        viewModel.interpretar(frase)
+    }
 
-        binding.btnInterpretar.isEnabled = false
-
-        categoriaRepository.obtenerTodas { resultado ->
-            runOnUiThread {
-
-                binding.btnInterpretar.isEnabled = true
-
-                resultado
-                    .onSuccess { categorias ->
-
-                        val interpretacion =
-                            ParserActividad().interpretar(
-                                frase,
-                                ZonedDateTime.now(),
-                                categorias
-                            )
-
-                        val intent = Intent(
-                            this,
-                            NuevaTareaActividad::class.java
-                        ).apply {
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_TEXTO_ORIGINAL,
-                                interpretacion.textoOriginal
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_TITULO,
-                                interpretacion.titulo.valor.orEmpty()
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_TIPO,
-                                interpretacion.tipo.valor?.name
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_FECHA,
-                                interpretacion.fecha.valor?.toString()
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_HORA,
-                                interpretacion.hora.valor?.toString()
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_PRIORIDAD,
-                                interpretacion.prioridad.valor?.name
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_CATEGORIA_ID,
-                                interpretacion.categoriaId.valor ?: -1L
-                            )
-
-                            putStringArrayListExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_ADVERTENCIAS,
-                                ArrayList(interpretacion.advertencias)
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_DESCRIPCION,
-                                interpretacion.descripcion.valor
-                            )
-
-                            putExtra(
-                                NuevaTareaActividad.EXTRA_PARSER_RECORDATORIO,
-                                interpretacion.recordatorio.valor?.name
-                            )
-                        }
-
-                        nuevaTareaLauncher.launch(intent)
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.estado.collect {
+                        binding.btnInterpretar.isEnabled = !it.interpretando
                     }
-
-                    .onFailure {
-                        Toast.makeText(
-                            this,
-                            "No se pudieron cargar las categorías para interpretar la frase",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
+                }
+                launch { viewModel.efectos.collect(::procesarEfecto) }
             }
         }
+    }
+
+    private fun procesarEfecto(efecto: InicioEfecto) {
+        when (efecto) {
+            is InicioEfecto.AbrirFormulario -> abrirFormulario(efecto.resultado)
+            is InicioEfecto.MostrarDetalle -> mostrarDetalle(
+                efecto.detalle.actividad,
+                efecto.detalle.nombreCategoria
+            )
+            is InicioEfecto.Mensaje -> Toast.makeText(
+                this,
+                efecto.texto,
+                Toast.LENGTH_LONG
+            ).show()
+        }
+    }
+
+    private fun abrirFormulario(interpretacion: ResultadoParser) {
+        val intent = Intent(this, NuevaTareaActividad::class.java).apply {
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_TEXTO_ORIGINAL,
+                interpretacion.textoOriginal
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_TITULO,
+                interpretacion.titulo.valor.orEmpty()
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_TIPO,
+                interpretacion.tipo.valor?.name
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_FECHA,
+                interpretacion.fecha.valor?.toString()
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_HORA,
+                interpretacion.hora.valor?.toString()
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_PRIORIDAD,
+                interpretacion.prioridad.valor?.name
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_CATEGORIA_ID,
+                interpretacion.categoriaId.valor ?: -1L
+            )
+            putStringArrayListExtra(
+                NuevaTareaActividad.EXTRA_PARSER_ADVERTENCIAS,
+                ArrayList(interpretacion.advertencias)
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_DESCRIPCION,
+                interpretacion.descripcion.valor
+            )
+            putExtra(
+                NuevaTareaActividad.EXTRA_PARSER_RECORDATORIO,
+                interpretacion.recordatorio.valor?.name
+            )
+        }
+        nuevaTareaLauncher.launch(intent)
     }
 
     // Crear el canal de notificaciones
@@ -293,32 +276,7 @@ class MainActivity : AppCompatActivity() {
             ReceptorRecordatorio.EXTRA_ACTIVIDAD_ID
         )
 
-        actividadRepository.obtenerPorId(actividadId) { resultado ->
-            runOnUiThread {
-
-                resultado
-                    .onSuccess { actividad ->
-
-                        if (actividad == null) {
-                            Toast.makeText(
-                                this,
-                                "La actividad ya no existe",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        } else {
-                            mostrarDetalleConCategoria(actividad)
-                        }
-                    }
-
-                    .onFailure {
-                        Toast.makeText(
-                            this,
-                            "No se pudo abrir la actividad",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-            }
-        }
+        viewModel.abrirActividad(actividadId)
     }
 
     // Solicitar permiso para mostrar notificaciones
@@ -353,38 +311,6 @@ class MainActivity : AppCompatActivity() {
                 ).show()
             }
         }
-
-    // Consultar la categoría de una actividad
-    private fun mostrarDetalleConCategoria(actividad: Actividad) {
-
-        val categoriaId = actividad.categoriaId
-
-        if (categoriaId == null) {
-            mostrarDetalle(actividad, "Sin categoría")
-            return
-        }
-
-        categoriaRepository.obtenerPorId(categoriaId) { resultado ->
-            runOnUiThread {
-
-                resultado
-                    .onSuccess { categoria ->
-                        mostrarDetalle(
-                            actividad,
-                            categoria?.nombre ?: "Sin categoría"
-                        )
-                    }
-
-                    .onFailure {
-                        Toast.makeText(
-                            this,
-                            "No se pudo consultar la categoría",
-                            Toast.LENGTH_LONG
-                        ).show()
-                    }
-            }
-        }
-    }
 
     // Mostrar detalle de una tarea o evento
     private fun mostrarDetalle(

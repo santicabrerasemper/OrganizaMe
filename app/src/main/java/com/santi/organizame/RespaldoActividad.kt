@@ -7,26 +7,41 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.santi.organizame.modelo.OrganizaMeDatabase
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.santi.organizame.domain.usecase.RespaldoPreparado
 import com.santi.organizame.respaldo.DatosRespaldo
-import com.santi.organizame.respaldo.RespaldoJson
-import com.santi.organizame.respaldo.RespaldoRepository
-import java.time.Instant
+import com.santi.organizame.ui.respaldo.RespaldoEfecto
+import com.santi.organizame.ui.respaldo.RespaldoViewModel
+import com.santi.organizame.ui.respaldo.RespaldoViewModelFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.concurrent.Executors
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class RespaldoActividad : AppCompatActivity() {
 
-    private lateinit var repositorio: RespaldoRepository
+    private val viewModel: RespaldoViewModel by viewModels {
+        RespaldoViewModelFactory(applicationContext)
+    }
+    private var destinoExportacion: Uri? = null
 
     private val crearDocumento = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
-    ) { uri -> uri?.let(::exportarA) }
+    ) { uri ->
+        uri?.let {
+            destinoExportacion = it
+            mostrarEstado("Preparando respaldo…")
+            viewModel.prepararExportacion()
+        }
+    }
 
     private val abrirDocumento = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -37,54 +52,89 @@ class RespaldoActividad : AppCompatActivity() {
         setContentView(R.layout.activity_respaldo)
         aplicarInsets()
 
-        repositorio = RespaldoRepository(OrganizaMeDatabase.obtener(applicationContext))
-
         findViewById<Button>(R.id.btnVolverRespaldo).setOnClickListener { finish() }
         findViewById<Button>(R.id.btnExportarRespaldo).setOnClickListener {
-            val marca = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmm"))
+            val marca = LocalDateTime.now().format(
+                DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
+            )
             crearDocumento.launch("organizame-$marca.json")
         }
         findViewById<Button>(R.id.btnImportarRespaldo).setOnClickListener {
             abrirDocumento.launch(arrayOf("application/json", "text/plain"))
         }
+        observarViewModel()
     }
 
-    private fun exportarA(uri: Uri) {
-        mostrarEstado("Preparando respaldo…")
-        repositorio.obtener { resultado ->
-            resultado.onSuccess { datos ->
-                val escritura = runCatching {
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.estado.collect { estado ->
+                        findViewById<Button>(R.id.btnExportarRespaldo).isEnabled =
+                            !estado.procesando
+                        findViewById<Button>(R.id.btnImportarRespaldo).isEnabled =
+                            !estado.procesando
+                    }
+                }
+                launch { viewModel.efectos.collect(::procesarEfecto) }
+            }
+        }
+    }
+
+    private fun procesarEfecto(efecto: RespaldoEfecto) {
+        when (efecto) {
+            is RespaldoEfecto.Exportar -> escribirRespaldo(efecto.respaldo)
+            is RespaldoEfecto.ConfirmarImportacion -> confirmarImportacion(efecto.datos)
+            is RespaldoEfecto.Mensaje -> {
+                mostrarEstado(efecto.texto)
+                if (efecto.error || efecto.toastCorto) {
+                    Toast.makeText(
+                        this,
+                        if (efecto.toastCorto) "Datos recuperados" else efecto.texto,
+                        if (efecto.toastCorto) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
+                    ).show()
+                }
+            }
+        }
+    }
+
+    private fun escribirRespaldo(respaldo: RespaldoPreparado) {
+        val uri = destinoExportacion ?: run {
+            mostrarError("No se pudo abrir el archivo")
+            return
+        }
+        lifecycleScope.launch {
+            val resultado = withContext(Dispatchers.IO) {
+                runCatching {
                     contentResolver.openOutputStream(uri)?.bufferedWriter()?.use {
-                        it.write(RespaldoJson.serializar(datos))
+                        it.write(respaldo.texto)
                     } ?: error("No se pudo abrir el archivo")
                 }
-                runOnUiThread {
-                    escritura.onSuccess {
-                        mostrarEstado(
-                            "Respaldo exportado: ${datos.actividades.size} actividades y " +
-                                    "${datos.categorias.size} categorías."
-                        )
-                    }.onFailure { mostrarError("No se pudo exportar el respaldo") }
-                }
-            }.onFailure {
-                runOnUiThread { mostrarError("No se pudieron leer los datos") }
             }
+            resultado.onSuccess {
+                mostrarEstado(
+                    "Respaldo exportado: ${respaldo.actividades} actividades y " +
+                        "${respaldo.categorias} categorías."
+                )
+            }.onFailure {
+                mostrarError("No se pudo exportar el respaldo")
+            }
+            destinoExportacion = null
         }
     }
 
     private fun leerRespaldo(uri: Uri) {
         mostrarEstado("Revisando archivo…")
-        ejecutor.execute {
-            val resultado = runCatching {
-                val texto = contentResolver.openInputStream(uri)?.bufferedReader()?.use {
-                    it.readText()
-                } ?: error("No se pudo abrir el archivo")
-                RespaldoJson.deserializar(texto)
+        lifecycleScope.launch {
+            val resultado = withContext(Dispatchers.IO) {
+                runCatching {
+                    contentResolver.openInputStream(uri)?.bufferedReader()?.use {
+                        it.readText()
+                    } ?: error("No se pudo abrir el archivo")
+                }
             }
-            runOnUiThread {
-                resultado.onSuccess(::confirmarImportacion)
-                    .onFailure { mostrarError("El archivo no es un respaldo válido") }
-            }
+            resultado.onSuccess(viewModel::analizar)
+                .onFailure { mostrarError("El archivo no es un respaldo válido") }
         }
     }
 
@@ -93,51 +143,17 @@ class RespaldoActividad : AppCompatActivity() {
             .setTitle("Importar respaldo")
             .setMessage(
                 "Se reemplazarán los datos actuales por ${datos.actividades.size} actividades " +
-                        "y ${datos.categorias.size} categorías. ¿Querés continuar?"
+                    "y ${datos.categorias.size} categorías. ¿Querés continuar?"
             )
-            .setPositiveButton("Importar") { _, _ -> importar(datos) }
+            .setPositiveButton("Importar") { _, _ ->
+                mostrarEstado("Importando respaldo…")
+                viewModel.importar(datos)
+            }
             .setNegativeButton("Cancelar") { _, _ ->
                 mostrarEstado("Importación cancelada.")
             }
-            .setOnCancelListener {
-                mostrarEstado("Importación cancelada.")
-            }
+            .setOnCancelListener { mostrarEstado("Importación cancelada.") }
             .show()
-    }
-
-    private fun importar(datos: DatosRespaldo) {
-        mostrarEstado("Importando respaldo…")
-        repositorio.obtener { actuales ->
-            actuales.onSuccess { datosActuales ->
-                val ahora = Instant.now()
-                val normalizados = datos.copy(
-                    actividades = datos.actividades.map { actividad ->
-                        actividad.copy(
-                            fechaRecordatorioProgramado =
-                                ProgramadorRecordatorios.calcularMomentoAviso(
-                                    actividad.fecha,
-                                    actividad.hora,
-                                    actividad.recordatorio
-                                )?.takeIf { it.isAfter(ahora) }
-                        )
-                    }
-                )
-
-                repositorio.reemplazar(normalizados) { resultado ->
-                    runOnUiThread {
-                        resultado.onSuccess {
-                            val programador = ProgramadorRecordatorios(applicationContext)
-                            datosActuales.actividades.forEach { programador.cancelar(it.id) }
-                            normalizados.actividades.forEach(programador::programar)
-                            mostrarEstado("Respaldo importado correctamente.")
-                            Toast.makeText(this, "Datos recuperados", Toast.LENGTH_SHORT).show()
-                        }.onFailure { mostrarError("No se pudo importar el respaldo") }
-                    }
-                }
-            }.onFailure {
-                runOnUiThread { mostrarError("No se pudieron preparar los datos actuales") }
-            }
-        }
     }
 
     private fun mostrarEstado(mensaje: String) {
@@ -166,9 +182,5 @@ class RespaldoActividad : AppCompatActivity() {
             insets
         }
         ViewCompat.requestApplyInsets(vista)
-    }
-
-    private companion object {
-        val ejecutor = Executors.newSingleThreadExecutor()
     }
 }

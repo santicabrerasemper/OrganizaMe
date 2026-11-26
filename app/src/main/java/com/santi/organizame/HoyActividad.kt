@@ -14,22 +14,29 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.santi.organizame.modelo.Actividad
-import com.santi.organizame.modelo.ActividadRepository
 import com.santi.organizame.modelo.EstadoTarea
-import com.santi.organizame.modelo.OrganizaMeDatabase
 import com.santi.organizame.modelo.TipoActividad
+import com.santi.organizame.ui.consulta.ConsultaActividadesViewModel
+import com.santi.organizame.ui.consulta.ConsultaActividadesViewModelFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 class HoyActividad : AppCompatActivity() {
 
-    private lateinit var repositorio: ActividadRepository
+    private val viewModel: ConsultaActividadesViewModel by viewModels {
+        ConsultaActividadesViewModelFactory(applicationContext)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,32 +72,27 @@ class HoyActividad : AppCompatActivity() {
             finish()
         }
 
-        // Conexión con Room
-        repositorio = ActividadRepository(
-            OrganizaMeDatabase.obtener(applicationContext).actividadDao()
-        )
+        observarViewModel()
     }
 
     override fun onResume() {
         super.onResume()
-        cargarActividades()
+        viewModel.cargar()
     }
 
-    // Obtener las actividades guardadas
-    private fun cargarActividades() {
-        repositorio.obtenerTodas { resultado ->
-            runOnUiThread {
-                resultado
-                    .onSuccess { actividades ->
-                        mostrarResumen(actividades)
+    private fun observarViewModel() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    viewModel.estado.collect { estado ->
+                        if (estado.cargaCompletada) mostrarResumen(estado.actividades)
                     }
-                    .onFailure {
-                        Toast.makeText(
-                            this,
-                            "No se pudieron cargar las actividades",
-                            Toast.LENGTH_LONG
-                        ).show()
+                }
+                launch {
+                    viewModel.errores.collect { mensaje ->
+                        Toast.makeText(this@HoyActividad, mensaje, Toast.LENGTH_LONG).show()
                     }
+                }
             }
         }
     }
