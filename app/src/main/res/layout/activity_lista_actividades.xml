@@ -143,8 +143,37 @@
                 android:textAppearance="@style/TextAppearance.OrganizaMe.Body"
                 android:visibility="gone" />
 
+
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/listaPendientes"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:paddingTop="8dp"
+                android:visibility="gone" />
+
+            <Button
+                android:id="@+id/btnEventos"
+                style="@style/Widget.OrganizaMe.Button.BlueTonal"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="10dp"
+                android:gravity="start|center_vertical"
+                android:text="Eventos" />
+
+            <TextView
+                android:id="@+id/textoEventos"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_card"
+                android:padding="16dp"
+                android:text="Acá aparecerán los eventos."
+                android:textAppearance="@style/TextAppearance.OrganizaMe.Body"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/listaEventos"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:nestedScrollingEnabled="false"
@@ -207,33 +236,6 @@
                 android:paddingTop="8dp"
                 android:visibility="gone" />
 
-            <Button
-                android:id="@+id/btnEventos"
-                style="@style/Widget.OrganizaMe.Button.BlueTonal"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:gravity="start|center_vertical"
-                android:text="Eventos" />
-
-            <TextView
-                android:id="@+id/textoEventos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:background="@drawable/bg_card"
-                android:padding="16dp"
-                android:text="Acá aparecerán los eventos."
-                android:textAppearance="@style/TextAppearance.OrganizaMe.Body"
-                android:visibility="gone" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/listaEventos"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:nestedScrollingEnabled="false"
-                android:paddingTop="8dp"
-                android:visibility="gone" />
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 

@@ -39,6 +39,7 @@ class HoyActividad : AppCompatActivity() {
     private val viewModel: ConsultaActividadesViewModel by viewModels {
         ConsultaActividadesViewModelFactory(applicationContext)
     }
+    private var filtroSeleccionado: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -100,7 +101,9 @@ class HoyActividad : AppCompatActivity() {
     }
 
     // Calcular las actividades del día y las vencidas
+
     private fun mostrarResumen(actividades: List<Actividad>) {
+
         val ahora = LocalDateTime.now()
         val hoy = ahora.toLocalDate()
 
@@ -113,7 +116,8 @@ class HoyActividad : AppCompatActivity() {
         }
 
         val pendientes = tareasHoy.count {
-            it.estadoTarea == EstadoTarea.PENDIENTE
+            it.estadoTarea == EstadoTarea.PENDIENTE &&
+                    !estaVencida(it, ahora)
         }
 
         val completadas = tareasHoy.count {
@@ -137,52 +141,130 @@ class HoyActividad : AppCompatActivity() {
         findViewById<TextView>(R.id.fechaHoy).text =
             hoy.format(formatoFecha)
 
-        // Mostrar los cuatro recuadros del resumen
+        // Mostrar los cuatro recuadros y permitir seleccionarlos
         mostrarRecuadrosResumen(
             pendientes,
             completadas,
             eventos,
             vencidas.size
-        )
+        ) { nombre ->
 
-        // Contenedor donde se muestran las actividades
+            // Si toca nuevamente el mismo filtro, se desactiva
+            filtroSeleccionado =
+                if (filtroSeleccionado == nombre) {
+                    null
+                } else {
+                    nombre
+                }
+
+            // Actualizar las actividades mostradas
+            mostrarResumen(actividades)
+        }
+
+        // Contenedor donde aparecen las actividades
         val contenedor = findViewById<LinearLayout>(
             R.id.contenedorActividadesHoy
         )
 
         contenedor.removeAllViews()
 
-        // Actividades programadas para hoy
-        agregarSeccion(
-            contenedor,
-            "Actividades de hoy",
-            actividadesHoy,
-            ahora
-        )
+        // Mostrar las actividades según el filtro seleccionado
+        when (filtroSeleccionado) {
 
-        // Tareas vencidas de días anteriores
-        val vencidasAnteriores = vencidas.filter {
-            it.fecha?.isBefore(hoy) == true
-        }
+            "Pendientes" -> {
 
-        if (vencidasAnteriores.isNotEmpty()) {
-            agregarSeccion(
-                contenedor,
-                "Tareas vencidas de días anteriores",
-                vencidasAnteriores,
-                ahora
-            )
+                val lista = tareasHoy.filter {
+                    it.estadoTarea == EstadoTarea.PENDIENTE &&
+                            !estaVencida(it, ahora)
+                }
+
+                agregarSeccion(
+                    contenedor,
+                    "Pendientes de hoy",
+                    lista,
+                    ahora
+                )
+            }
+
+            "Completadas" -> {
+
+                val lista = tareasHoy.filter {
+                    it.estadoTarea == EstadoTarea.COMPLETADA
+                }
+
+                agregarSeccion(
+                    contenedor,
+                    "Completadas de hoy",
+                    lista,
+                    ahora
+                )
+            }
+
+            "Eventos" -> {
+
+                val lista = actividadesHoy.filter {
+                    it.tipo == TipoActividad.EVENTO
+                }
+
+                agregarSeccion(
+                    contenedor,
+                    "Eventos de hoy",
+                    lista,
+                    ahora
+                )
+            }
+
+            "Vencidas" -> {
+
+                agregarSeccion(
+                    contenedor,
+                    "Tareas vencidas",
+                    vencidas,
+                    ahora
+                )
+            }
+
+            else -> {
+
+                // Vista original: todas las actividades de hoy
+                agregarSeccion(
+                    contenedor,
+                    "Actividades de hoy",
+                    actividadesHoy,
+                    ahora
+                )
+
+                // Tareas vencidas de días anteriores
+                val vencidasAnteriores = vencidas.filter {
+                    it.fecha?.isBefore(hoy) == true
+                }
+
+                if (vencidasAnteriores.isNotEmpty()) {
+
+                    agregarSeccion(
+                        contenedor,
+                        "Tareas vencidas de días anteriores",
+                        vencidasAnteriores,
+                        ahora
+                    )
+                }
+            }
         }
     }
 
     // Mostrar los contadores en cuatro recuadros
+
     private fun mostrarRecuadrosResumen(
         pendientes: Int,
         completadas: Int,
         eventos: Int,
-        vencidas: Int
+        vencidas: Int,
+        alSeleccionar: (String) -> Unit
     ) {
-        val contenedor = findViewById<LinearLayout>(R.id.resumenHoy)
+        val contenedor = findViewById<LinearLayout>(
+            R.id.resumenHoy
+        )
+
         contenedor.removeAllViews()
 
         val filas = listOf(
@@ -205,15 +287,20 @@ class HoyActividad : AppCompatActivity() {
             datosFila.forEach { (nombre, cantidad) ->
 
                 val esVencida = nombre == "Vencidas"
+                val estaSeleccionada = filtroSeleccionado == nombre
 
                 val tarjeta = TextView(this).apply {
+
                     text = "$cantidad\n$nombre"
                     textSize = 17f
                     gravity = Gravity.CENTER
                     setTypeface(null, Typeface.BOLD)
 
                     setTextColor(
-                        color(if (esVencida) R.color.danger else R.color.primary)
+                        color(
+                            if (esVencida) R.color.danger
+                            else R.color.primary
+                        )
                     )
 
                     setPadding(
@@ -224,14 +311,28 @@ class HoyActividad : AppCompatActivity() {
                     )
 
                     background = GradientDrawable().apply {
+
                         cornerRadius = dp(12).toFloat()
 
                         setColor(
                             color(
-                                if (esVencida) R.color.danger_container
-                                else R.color.primary_container
+                                if (esVencida)
+                                    R.color.danger_container
+                                else
+                                    R.color.primary_container
                             )
                         )
+
+                        // Resaltar el filtro seleccionado
+                        if (estaSeleccionada) {
+                            setStroke(
+                                dp(3),
+                                color(
+                                    if (esVencida) R.color.danger
+                                    else R.color.primary
+                                )
+                            )
+                        }
                     }
 
                     layoutParams = LinearLayout.LayoutParams(
@@ -239,12 +340,24 @@ class HoyActividad : AppCompatActivity() {
                         LinearLayout.LayoutParams.WRAP_CONTENT,
                         1f
                     ).apply {
+
                         setMargins(
                             dp(4),
                             dp(4),
                             dp(4),
                             dp(4)
                         )
+                    }
+
+                    // Hacer el recuadro seleccionable
+                    isClickable = true
+                    isFocusable = true
+
+                    contentDescription =
+                        "Ver $nombre, $cantidad actividades"
+
+                    setOnClickListener {
+                        alSeleccionar(nombre)
                     }
                 }
 
@@ -254,6 +367,7 @@ class HoyActividad : AppCompatActivity() {
             contenedor.addView(fila)
         }
     }
+
 
     // Comprobar si una tarea está vencida
     private fun estaVencida(
@@ -311,7 +425,13 @@ class HoyActividad : AppCompatActivity() {
         }
 
         // Crear una tarjeta por cada actividad
-        actividades.forEach { actividad ->
+        actividades.sortedWith(
+            compareByDescending<Actividad> {
+                it.fecha ?: java.time.LocalDate.MIN
+            }.thenByDescending {
+                it.hora ?: java.time.LocalTime.MIN
+            }
+        ).forEach { actividad ->
 
             val vencida = estaVencida(actividad, ahora)
 

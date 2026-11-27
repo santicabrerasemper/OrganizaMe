@@ -51,52 +51,145 @@ class CargarDatosListadoUseCase(
     }
 }
 
+
+
 class FiltrarActividadesUseCase {
+
     operator fun invoke(
         actividades: List<Actividad>,
         criterios: CriteriosFiltroActividad,
         orden: OrdenActividad,
         ahora: LocalDateTime = LocalDateTime.now()
     ): SeccionesActividades {
-        val filtradas = FiltroActividades.aplicar(actividades, criterios)
+
+        val filtradas = FiltroActividades.aplicar(
+            actividades,
+            criterios
+        )
+
+        // Ordenar una sección según el criterio elegido
+        fun ordenarSeccion(
+            lista: List<Actividad>,
+            recientesPrimero: Boolean = false
+        ): List<Actividad> {
+
+            val ordenadas = OrdenadorActividades.ordenar(
+                lista,
+                orden
+            )
+
+            return if (
+                orden == OrdenActividad.FECHA_HORA &&
+                recientesPrimero
+            ) {
+                ordenadas.asReversed()
+            } else {
+                ordenadas
+            }
+        }
+
+        // Eventos futuros primero; pasados después
+        fun ordenarEventos(
+            lista: List<Actividad>
+        ): List<Actividad> {
+
+            val ordenadas = OrdenadorActividades.ordenar(
+                lista,
+                orden
+            )
+
+            if (orden != OrdenActividad.FECHA_HORA) {
+                return ordenadas
+            }
+
+            val conFecha = ordenadas.filter {
+                it.fecha != null
+            }
+
+            val sinFecha = ordenadas.filter {
+                it.fecha == null
+            }
+
+            val (proximos, pasados) = conFecha.partition {
+                    actividad ->
+
+                val fecha = actividad.fecha
+                    ?: return@partition false
+
+                fecha.isAfter(ahora.toLocalDate()) ||
+                        (
+                                fecha == ahora.toLocalDate() &&
+                                        (
+                                                actividad.hora == null ||
+                                                        !actividad.hora.isBefore(
+                                                            ahora.toLocalTime()
+                                                        )
+                                                )
+                                )
+            }
+
+            return proximos + pasados.asReversed() + sinFecha
+        }
+
         return SeccionesActividades(
-            pendientes = OrdenadorActividades.ordenar(
+
+            // Primero las actividades más próximas
+            pendientes = ordenarSeccion(
                 filtradas.filter {
                     it.tipo == TipoActividad.TAREA &&
-                        it.estadoTarea == EstadoTarea.PENDIENTE &&
-                        !estaVencida(it, ahora)
+                            it.estadoTarea == EstadoTarea.PENDIENTE &&
+                            !estaVencida(it, ahora)
+                }
+            ),
+
+            // Primero las vencidas más recientes
+            vencidas = ordenarSeccion(
+                filtradas.filter {
+                    estaVencida(it, ahora)
                 },
-                orden
+                recientesPrimero = true
             ),
-            vencidas = OrdenadorActividades.ordenar(
-                filtradas.filter { estaVencida(it, ahora) },
-                orden
-            ),
-            completadas = OrdenadorActividades.ordenar(
+
+            // Primero las completadas más recientes
+            completadas = ordenarSeccion(
                 filtradas.filter {
                     it.tipo == TipoActividad.TAREA &&
-                        it.estadoTarea == EstadoTarea.COMPLETADA
+                            it.estadoTarea == EstadoTarea.COMPLETADA
                 },
-                orden
+                recientesPrimero = true
             ),
-            eventos = OrdenadorActividades.ordenar(
-                filtradas.filter { it.tipo == TipoActividad.EVENTO },
-                orden
+
+            // Primero los próximos eventos
+            eventos = ordenarEventos(
+                filtradas.filter {
+                    it.tipo == TipoActividad.EVENTO
+                }
             )
         )
     }
 
-    private fun estaVencida(actividad: Actividad, ahora: LocalDateTime): Boolean {
-        if (actividad.tipo != TipoActividad.TAREA ||
+    private fun estaVencida(
+        actividad: Actividad,
+        ahora: LocalDateTime
+    ): Boolean {
+
+        if (
+            actividad.tipo != TipoActividad.TAREA ||
             actividad.estadoTarea != EstadoTarea.PENDIENTE
         ) return false
 
         val fecha = actividad.fecha ?: return false
+
         return fecha.isBefore(ahora.toLocalDate()) ||
-            (fecha == ahora.toLocalDate() &&
-                actividad.hora?.isBefore(ahora.toLocalTime()) == true)
+                (
+                        fecha == ahora.toLocalDate() &&
+                                actividad.hora?.isBefore(
+                                    ahora.toLocalTime()
+                                ) == true
+                        )
     }
 }
+
 
 class CambiarEstadoActividadUseCase(
     private val repositorio: RepositorioActividades,

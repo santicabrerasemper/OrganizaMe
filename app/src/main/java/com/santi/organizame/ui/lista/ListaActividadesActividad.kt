@@ -36,6 +36,12 @@ import com.santi.organizame.ui.lista.ListaActividadesViewModel
 import com.santi.organizame.ui.lista.ListaActividadesViewModelFactory
 import com.santi.organizame.ui.formulario.NuevaTareaActividad
 import java.time.format.DateTimeFormatter
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.launch
 
 class ListaActividadesActividad : AppCompatActivity() {
@@ -312,31 +318,193 @@ class ListaActividadesActividad : AppCompatActivity() {
             if (abierta && cantidad == 0) View.VISIBLE else View.GONE
     }
 
-    private fun mostrarDetalle(actividad: Actividad, nombreCategoria: String) {
+
+    private fun mostrarDetalle(
+        actividad: Actividad,
+        nombreCategoria: String
+    ) {
+        fun dp(valor: Int): Int =
+            (valor * resources.displayMetrics.density).toInt()
+
+        val colorTexto = ContextCompat.getColor(
+            this, R.color.on_background
+        )
+        val colorSecundario = ContextCompat.getColor(
+            this, R.color.on_surface_variant
+        )
+        val colorTarjeta = ContextCompat.getColor(
+            this, R.color.surface_variant
+        )
+        val colorPrincipal = ContextCompat.getColor(
+            this, R.color.primary
+        )
+
         val formatoFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy")
         val formatoHora = DateTimeFormatter.ofPattern("HH:mm")
-        val detalle = buildString {
-            append("Título: ${actividad.titulo}")
-            append("\nTipo: ${actividad.tipo}")
-            actividad.descripcion?.takeIf(String::isNotBlank)?.let {
-                append("\nDescripción: $it")
-            }
-            actividad.fecha?.let { append("\nFecha: ${it.format(formatoFecha)}") }
-            actividad.hora?.let { append("\nHora: ${it.format(formatoHora)}") }
-            append("\nPrioridad: ${actividad.prioridad}")
-            append("\nCategoría: $nombreCategoria")
-            actividad.estadoTarea?.let { append("\nEstado: $it") }
-            append("\nRecordatorio: " +
-                (actividad.recordatorio?.name?.replace("_", " ") ?: "Sin recordatorio"))
-            if (actividad.recurrencia != Recurrencia.SIN_REPETICION) {
-                append("\nRepetición: ${nombreRecurrencia(actividad.recurrencia)}")
+
+        val contenedor = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(16), dp(12), dp(16), dp(12))
+
+            background = GradientDrawable().apply {
+                setColor(colorTarjeta)
+                cornerRadius = dp(16).toFloat()
             }
         }
-        AlertDialog.Builder(this)
+
+        fun agregarTexto(
+            contenido: String,
+            tamano: Float = 19f,
+            negrita: Boolean = false,
+            destacado: Boolean = false,
+            espacioSuperior: Int = 10
+        ) {
+            val texto = TextView(this).apply {
+                text = contenido
+                textSize = tamano
+                setTextColor(
+                    if (destacado) colorPrincipal
+                    else if (negrita) colorTexto
+                    else colorSecundario
+                )
+                if (negrita) {
+                    typeface = Typeface.DEFAULT_BOLD
+                }
+                setLineSpacing(dp(3).toFloat(), 1f)
+            }
+
+            val parametros = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            ).apply {
+                topMargin = dp(espacioSuperior)
+            }
+
+            contenedor.addView(texto, parametros)
+        }
+
+        // Título principal
+        agregarTexto(
+            actividad.titulo,
+            tamano = 24f,
+            negrita = true,
+            destacado = true,
+            espacioSuperior = 0
+        )
+
+        // Tipo de actividad
+        agregarTexto(
+            if (actividad.tipo == TipoActividad.TAREA) {
+                "📋  Tarea"
+            } else {
+                "📅  Evento"
+            }
+        )
+
+        // Fecha y hora
+        val fecha = actividad.fecha?.format(formatoFecha)
+            ?: "Sin fecha"
+
+        val hora = actividad.hora?.format(formatoHora)
+
+        agregarTexto(
+            "📅  $fecha" +
+                    if (hora != null) "  ·  $hora hs" else ""
+        )
+
+        // Prioridad
+        val iconoPrioridad = when (actividad.prioridad) {
+            Prioridad.ALTA -> "🔴"
+            Prioridad.MEDIA -> "🟡"
+            Prioridad.BAJA -> "🟢"
+        }
+
+        agregarTexto(
+            "$iconoPrioridad  Prioridad: ${actividad.prioridad}"
+        )
+
+        // Estado de la tarea
+        actividad.estadoTarea?.let { estado ->
+            val icono = if (estado == EstadoTarea.COMPLETADA) {
+                "✅"
+            } else {
+                "⏳"
+            }
+
+            agregarTexto("$icono  Estado: $estado")
+        }
+
+        // Categoría
+        agregarTexto("📁  Categoría: $nombreCategoria")
+
+        // Recordatorio
+        val nombreRecordatorio = when (actividad.recordatorio) {
+            com.santi.organizame.modelo.AnticipacionRecordatorio.A_LA_HORA ->
+                "A la hora"
+
+            com.santi.organizame.modelo.AnticipacionRecordatorio.DIEZ_MINUTOS_ANTES ->
+                "10 minutos antes"
+
+            com.santi.organizame.modelo.AnticipacionRecordatorio.TREINTA_MINUTOS_ANTES ->
+                "30 minutos antes"
+
+            com.santi.organizame.modelo.AnticipacionRecordatorio.UNA_HORA_ANTES ->
+                "1 hora antes"
+
+            com.santi.organizame.modelo.AnticipacionRecordatorio.UN_DIA_ANTES ->
+                "1 día antes"
+
+            null -> "Sin recordatorio"
+        }
+
+        agregarTexto("🔔  Recordatorio: $nombreRecordatorio")
+
+        // Repetición
+        if (actividad.recurrencia != Recurrencia.SIN_REPETICION) {
+            agregarTexto(
+                "🔁  Repetición: ${nombreRecurrencia(actividad.recurrencia)}"
+            )
+        }
+
+        // Descripción
+        actividad.descripcion
+            ?.takeIf { it.isNotBlank() }
+            ?.let { descripcion ->
+
+                agregarTexto(
+                    "DESCRIPCIÓN",
+                    tamano = 14f,
+                    negrita = true,
+                    destacado = true,
+                    espacioSuperior = 22
+                )
+
+                agregarTexto(
+                    descripcion,
+                    tamano = 16f,
+                    espacioSuperior = 6
+                )
+            }
+
+        // Permitir desplazarse si hay muchos datos
+        val scroll = ScrollView(this).apply {
+            setPadding(dp(12), dp(8), dp(12), dp(8))
+            clipToPadding = false
+            addView(contenedor)
+        }
+
+        val dialogo = AlertDialog.Builder(this)
             .setTitle("Detalle de la actividad")
-            .setMessage(detalle)
+            .setView(scroll)
             .setPositiveButton("Cerrar", null)
-            .show()
+            .create()
+
+        dialogo.show()
+
+        dialogo.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.92).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
     }
 
     private fun nombreRecurrencia(recurrencia: Recurrencia): String =
